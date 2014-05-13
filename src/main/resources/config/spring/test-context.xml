@@ -12,19 +12,31 @@
 
  
     <!--
-        bm-ent-signup: Create users on a regular Alfresco Enterprise system
+        alfresco-benchmark-tests-ent-signup: Create users on a regular Alfresco Enterprise system
      -->
          
     <!-- Import any application contexts for test runs -->
-    <import resource="classpath:testrun-common-context.xml" />
+    <import resource="classpath:config/spring/test-common-context.xml" />
+    
+    <!--                 -->
+    <!-- Reporting       -->
+    <!--                 -->
+
+    <!-- The CompletionEstimator looking at the process count results -->
+    <bean id="completionEstimator" class="org.alfresco.bm.test.EventCountCompletionEstimator">
+        <constructor-arg name="eventService" ref="eventService" />
+        <constructor-arg name="resultService" ref="resultService" />
+        <constructor-arg name="eventName" value="createUser" />
+        <constructor-arg name="eventCount" value="${test.user.numberOfUsers}" />
+    </bean>
 
     <!--                 -->
     <!-- Support Service -->
     <!--                 -->
 
     <bean id="userDataService" class="org.alfresco.bm.user.UserDataServiceImpl">
-        <constructor-arg name="mongo" ref="mongoTemplate" />
-        <constructor-arg name="collectionName" value="${users.collectionName}" />
+        <constructor-arg name="db" ref="testMongoDB" />
+        <constructor-arg name="collection" value="${users.collectionName}" />
     </bean>
 
     <bean id="authenticationDetailsProvider" class="org.alfresco.bm.http.UserDataAutheticationDetailsProvider">
@@ -37,6 +49,14 @@
     <!-- EventProcessors -->
     <!--                 -->
     
+    <!-- Shared HTTP-Client instance provider to have better performance -->
+    <bean id="httpClientProvider" class="org.alfresco.http.SharedHttpClientProvider">
+         <constructor-arg name="maxNumberOfConnections" value="${http.connection.max}" />
+         <constructor-arg name="connectionTimeoutMs" value="${http.connection.timeoutMs}" />
+         <constructor-arg name="socketTimeoutMs" value="${http.socket.timeoutMs}" />
+         <constructor-arg name="socketTtlMs" value="${http.socket.ttlMs}" />
+    </bean>
+
     <!-- Basic arguments to build event processors that use AuthenticatedHttpEventProcessor -->
     <bean id="event.base.http" abstract="true" parent="event.base" >
          <constructor-arg name="httpClientProvider" ref="httpClientProvider" />
