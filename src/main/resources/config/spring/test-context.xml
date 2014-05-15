@@ -102,7 +102,7 @@
     </bean>
     
     <!-- Check that there are users available -->
-    <bean id="event.checkUsers" class="org.alfresco.bm.event.user.CheckUserCountEventProcessor" parent="event.base" >
+    <bean id="event.checkUsers" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="userCount" value="${test.user.numberOfUsers}" />
         <property name="eventNameUsersReady" value="usersChecked"/>

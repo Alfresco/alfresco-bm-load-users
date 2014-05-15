@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2012 Alfresco Software Limited.
+ * Copyright (C) 2005-2014 Alfresco Software Limited.
  *
  * This file is part of Alfresco
  *
@@ -54,18 +54,6 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
      * URL for people-related operations
      */
     private static final String PEOPLE_URL = "/alfresco/service/api/people";
-
-    /**
-     * URL for getting a single cm:person object based on a username. <br>
-     * <br>
-     * <b>Parameters:</b><br>
-     * - The username. Be sure this name is unique and isn't part of another
-     * username. Eg. 'user1' and 'user12' will both appear when searching
-     * 'user1', with 'user12' as first result. This is not desirable so make
-     * sure usernames end with a constant, eg: 'user-1-' to have unique
-     * name-parts.
-     */
-    public static final String PEOPLE_PICKER_URL = "/alfresco/service/api/forms/picker/authority/children?selectableType=cm:person&searchTerm={0}&size=1";
 
     public static final String PEOPLE_JSON_USERNAME = "userName";
     public static final String PEOPLE_JSON_FIRSTNAME = "firstName";
