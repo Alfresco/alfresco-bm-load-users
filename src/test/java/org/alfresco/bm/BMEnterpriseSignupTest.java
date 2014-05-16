@@ -18,6 +18,7 @@
  */
 package org.alfresco.bm;
 
+import org.alfresco.bm.test.TestRunServicesCache;
 import org.alfresco.bm.tools.BMTestRunner;
 import org.alfresco.bm.tools.BMTestRunnerListener;
 import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
@@ -54,8 +55,8 @@ public class BMEnterpriseSignupTest extends BMTestRunnerListenerAdaptor
     @Override
     public void testRunFinished(ApplicationContext testCtx, String test, String run)
     {
-//        TODO: Check results
-//        TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
+        //  TODO: Check results
+        TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
 //        ResultService resultService = services.getResultService(test, run);
 //        Assert.assertNotNull(resultService);
 //        // Let's check the results before the DB gets thrown away (we didn't make it ourselves)

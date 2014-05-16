@@ -65,7 +65,7 @@
          <property name="ticketBasedAuthentication" value="${alfresco.ticketBasedAuthentication}" />
     </bean>
 
-    <!-- Start by scheduling user-creation -->    
+    <!-- Start by scheduling user-creation -->
     <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="numberOfUsers" value="${test.user.numberOfUsers}"/>
