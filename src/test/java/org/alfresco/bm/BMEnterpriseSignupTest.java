@@ -18,14 +18,22 @@
  */
 package org.alfresco.bm;
 
+import java.util.Properties;
+
+import org.alfresco.bm.event.Event;
+import org.alfresco.bm.event.ResultService;
 import org.alfresco.bm.test.TestRunServicesCache;
 import org.alfresco.bm.tools.BMTestRunner;
-import org.alfresco.bm.tools.BMTestRunnerListener;
 import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
+import org.alfresco.mongo.MongoDBForTestsFactory;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.springframework.context.ApplicationContext;
+
+import com.mongodb.MongoClientURI;
 
 /**
  * Run the <b>Enterprise Signup</b> tests using the default arguments.
@@ -34,74 +42,72 @@ import org.springframework.context.ApplicationContext;
  * @since 2.0
  */
 @RunWith(JUnit4.class)
-public class BMEnterpriseSignupTest extends BMTestRunnerListenerAdaptor
+public class BMEnterpriseSignupTest
 {
+    /** In order to avoid name clashes on the target repo, we need to use a unique last name for each test */
+    private Properties testProperties;
+    
+    @Before
+    public void setUp()
+    {
+        testProperties = new Properties();
+        testProperties.setProperty("test.user.lastNamePattern", "BMEnterpriseSignupTest-" + System.currentTimeMillis());
+    }
+    
     @Test
-    public void runSample() throws Exception
+    public void runDefaultSignup() throws Exception
     {
         BMTestRunner runner = new BMTestRunner(60000L);         // Should be done in 60s
-        runner.addListener(this);
-        runner.run(null, null);
+        runner.addListener(new TestRunSignupListener());
+        runner.run(null, null, testProperties);
     }
-
+    
     /**
-     * A listener method that allows the test to check results <b>before</b> the in-memory MongoDB instance
-     * is discarded.
-     * <p/>
-     * Check that the exact number of results are available, as expected
-     * 
-     * @see BMTestRunnerListener
+     * The Alfresco server will already contain all the default users, so modify the test to
+     * generate non-default names.  The test is run twice and the results checked to ensure that,
+     * on the second time, no actual user creation processes are performed.
      */
-    @Override
-    public void testRunFinished(ApplicationContext testCtx, String test, String run)
+    @Test
+    public void runModifiedSignupTwice() throws Exception
     {
-        //  TODO: Check results
-        TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
-//        ResultService resultService = services.getResultService(test, run);
-//        Assert.assertNotNull(resultService);
-//        // Let's check the results before the DB gets thrown away (we didn't make it ourselves)
-//        
-//        // One successful START event
-//        Assert.assertEquals("Incorrect number of start events.", 1, resultService.countResultsByEventName(Event.EVENT_NAME_START));
-//        List<EventRecord> results = resultService.getResults(0L, Event.EVENT_NAME_START, false, 0, 1);
-//        if (results.size() > 0)
-//        {
-//            Assert.fail(Event.EVENT_NAME_START + " failed: \n" + results.toString());
-//        }
-//        
-//        /*
-//         * Start = 1 result
-//         * Scheduling = 2 results
-//         * Processing = 200 results
-//         * Successful processing generates a No-op for each 
-//         */
-//        List<String> eventNames = resultService.getEventNames();
-//        Assert.assertEquals("Incorrect number of event names: " + eventNames, 4, eventNames.size());
-//        Assert.assertEquals(
-//                "Incorrect number of events: " + ScheduleProcesses.EVENT_NAME_PROCESS,
-//                200, resultService.countResultsByEventName(ScheduleProcesses.EVENT_NAME_PROCESS));
-//        long failures = resultService.countResultsByFailure();
-//        
-//        // 202 events in total
-//        Assert.assertEquals("Incorrect number of results.", (403-failures), resultService.countResults());
-//        
-//        // Generate the test results summary
-//        SummaryReporter summaryReporter = new SummaryReporter(resultService);
-//        StringBuilderWriter sbWriter = new StringBuilderWriter(1024);
-//        try
-//        {
-//            summaryReporter.export(sbWriter, "No notes");
-//        }
-//        catch (IOException e)
-//        {
-//            throw new RuntimeException(e);
-//        }
-//        finally
-//        {
-//            sbWriter.close();
-//        }
-//        String summary = sbWriter.getBuilder().toString();
-//        Assert.assertTrue(summary.contains("scheduleProcesses"));
-//        Assert.assertTrue(summary.contains("process"));
+        // For this test we need to provide the database so that it does not get closed between runs
+        MongoDBForTestsFactory mongoDBForTestsFactory = new MongoDBForTestsFactory();
+        String uriWithoutDB = mongoDBForTestsFactory.getMongoURIWithoutDB();
+        String mongoConfigHost = new MongoClientURI(uriWithoutDB).getHosts().get(0);
+        
+        BMTestRunner runner = new BMTestRunner(60000L);         // Should be done in 60s
+        runner.addListener(new TestRunSignupListener());
+        runner.run(mongoConfigHost, null, testProperties);
+
+        // Run a second time using exactly the same config
+        runner.run(mongoConfigHost, null, testProperties);
+    }
+    
+    /**
+     * @see BMEnterpriseSignupTest#runModifiedSignupTwice()
+     * 
+     * @author Derek Hulley
+     * @since 2.0
+     */
+    private class TestRunSignupListener extends BMTestRunnerListenerAdaptor
+    {
+        boolean firstRun = true;
+        @Override
+        public void testRunFinished(ApplicationContext testCtx, String test, String run)
+        {
+            TestRunServicesCache services = testCtx.getBean(TestRunServicesCache.class);
+            ResultService resultService = services.getResultService(test, run);
+            
+            if (firstRun)
+            {
+                firstRun = false;
+                // Check the first run
+                Assert.assertEquals(1, resultService.countResultsByEventName(Event.EVENT_NAME_START));
+            }
+            else
+            {
+                // Check the second run
+            }
+        }
     }
 }
