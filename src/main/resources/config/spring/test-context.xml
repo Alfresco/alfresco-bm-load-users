@@ -62,7 +62,6 @@
          <constructor-arg name="httpClientProvider" ref="httpClientProvider" />
          <constructor-arg name="authenticationDetailsProvider" ref="authenticationDetailsProvider" />
          <constructor-arg name="baseUrl" value="${alfresco.url}" />
-         <property name="ticketBasedAuthentication" value="${alfresco.ticketBasedAuthentication}" />
     </bean>
 
     <!-- Start by scheduling user-creation -->
@@ -87,6 +86,7 @@
     <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
         <constructor-arg name="numberOfUsers" value="${test.user.numberOfUsers}"/>
+        <property name="creationDelay" value="${test.user.signupDelay}" />
         <property name="chart" value="false" />
     </bean>
     

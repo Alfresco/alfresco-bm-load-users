@@ -23,6 +23,7 @@ import java.util.Collections;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.http.AuthenticatedHttpEventProcessor;
+import org.alfresco.bm.user.UserData.UserCreationState;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
 import org.alfresco.http.SimpleHttpRequestCallback;
@@ -36,16 +37,25 @@ import org.json.simple.JSONObject;
 
 /**
  * Event processor that creates a test-user in the alfresco-system based on the
- * username present in the event and inserts an entry in mongo. <h1>Input</h1>
- * Username of user to create <h1>Data</h1> Collection containing users. User
- * will be marked as created and alfresco node-id will be stored. <h1>Actions</h1>
+ * username present in the event and inserts an entry in mongo.
+ * <p/>
+ * <h1>Input</h1><br/>
+ * Username of user to create
+ * <p/>
+ * <h1>Data</h1><br/>
+ * Collection containing users. User* will be marked as created.
+ * <p/>
+ * <h1>Actions</h1><br/>
  * The user is created in alfresco through REST. An exception is thrown when
  * user creation fails. When user already existed in alfresco when processed and
  * 'ignoreExistingUsers' property is set to true, the event is considered
- * processed successfuly instead of throwing an exception. <h1>Output</h1> No
- * next event will be scheduled.
+ * processed successfuly instead of throwing an exception.
+ * <p/>
+ * <h1>Output</h1>
+ * No next event will be scheduled.
  * 
  * @author Frederik Heremans
+ * @author Derek Hulley
  * @since 1.1
  */
 public class CreateUser extends AuthenticatedHttpEventProcessor
@@ -122,24 +132,28 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
                 eventResult = new EventResult(
                         "Ignoring existing user, already present in alfresco: " + username,
                         Collections.EMPTY_LIST);
+                // User should be OK
+                userDataService.setUserCreationState(username, UserCreationState.Created);
             }
             else
             {
-                throw new RuntimeException(String.format(
+                // User creation failed
+                String msg = String.format(
                         "Creating user failed, REST-call resulted in status:%d with error %s ",
                         httpStatus.getStatusCode(),
-                        httpStatus.getReasonPhrase()));
+                        httpStatus.getReasonPhrase());
+                eventResult = new EventResult(msg, false);
+                // User is unusable
+                userDataService.setUserCreationState(username, UserCreationState.Failed);
             }
         }
         else
         {
-            // TODO: Look in the response to see if there is a NodeRef available.
-            //       See PickUserCallback in bm-wf-api project.
             // Event execution was successful
             eventResult = new EventResult("User created in alfresco: " + username, Collections.EMPTY_LIST);
+            // User should be usable
+            userDataService.setUserCreationState(username, UserCreationState.Created);
         }
-        // User should be usable
-        userDataService.setUserCreated(username, true);
 
         return eventResult;
     }
