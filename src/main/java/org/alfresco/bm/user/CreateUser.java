@@ -20,10 +20,10 @@ package org.alfresco.bm.user;
 
 import java.util.Collections;
 
+import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
 import org.alfresco.bm.http.AuthenticatedHttpEventProcessor;
-import org.alfresco.bm.user.UserData.UserCreationState;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
 import org.alfresco.http.SimpleHttpRequestCallback;
@@ -133,7 +133,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
                         "Ignoring existing user, already present in alfresco: " + username,
                         Collections.EMPTY_LIST);
                 // User should be OK
-                userDataService.setUserCreationState(username, UserCreationState.Created);
+                userDataService.setUserCreationState(username, DataCreationState.Created);
             }
             else
             {
@@ -144,7 +144,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
                         httpStatus.getReasonPhrase());
                 eventResult = new EventResult(msg, false);
                 // User is unusable
-                userDataService.setUserCreationState(username, UserCreationState.Failed);
+                userDataService.setUserCreationState(username, DataCreationState.Failed);
             }
         }
         else
@@ -152,7 +152,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
             // Event execution was successful
             eventResult = new EventResult("User created in alfresco: " + username, Collections.EMPTY_LIST);
             // User should be usable
-            userDataService.setUserCreationState(username, UserCreationState.Created);
+            userDataService.setUserCreationState(username, DataCreationState.Created);
         }
 
         return eventResult;
