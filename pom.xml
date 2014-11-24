@@ -6,12 +6,13 @@
         <artifactId>alfresco-benchmark-tests-common</artifactId>
         <version>2.0</version>
     </parent>
-    <groupId>org.alfresco</groupId>
     <artifactId>alfresco-benchmark-tests-ent-signup</artifactId>
     <version>2.1-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
+        <server.version>2.0.3</server.version>
+        <junit.version>4.11</junit.version>
         <bm.tomcat.port>9082</bm.tomcat.port>
         <bm.tomcat.ip>localhost</bm.tomcat.ip>
         <bm.tomcat.url>http://${bm.tomcat.ip}:${bm.tomcat.port}/manager/text</bm.tomcat.url>
@@ -22,13 +23,13 @@
         <dependency>
             <groupId>org.alfresco</groupId>
             <artifactId>alfresco-benchmark-server</artifactId>
-            <version>2.0.0</version>
+            <version>${server.version}</version>
             <classifier>classes</classifier>
         </dependency>
         <dependency>
             <groupId>org.alfresco</groupId>
             <artifactId>alfresco-benchmark-util</artifactId>
-            <version>2.0.0</version>
+            <version>${server.version}</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
