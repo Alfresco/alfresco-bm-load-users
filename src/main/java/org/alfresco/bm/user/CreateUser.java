@@ -89,7 +89,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     @SuppressWarnings("unchecked")
     public EventResult processEvent(Event event) throws Exception
     {
-        String username = (String) event.getDataObject();
+        String username = (String) event.getData();
         
         EventResult eventResult = null;
 
