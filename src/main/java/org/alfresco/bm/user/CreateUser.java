@@ -19,6 +19,11 @@
 package org.alfresco.bm.user;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
@@ -70,10 +75,12 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     public static final String PEOPLE_JSON_LASTNAME = "lastName";
     public static final String PEOPLE_JSON_EMAIL = "email";
     public static final String PEOPLE_JSON_PASSWORD = "password";
+    public static final String PEOPLE_JSON_GROUPS = "groups";
     public static final String PEOPLE_JSON_NODEREF = "nodeRef";
 
     private UserDataService userDataService;
     private boolean ignoreExistingUsers = false;
+    private final Map<String, Double> userGroups;
 
     public CreateUser(
             HttpClientProvider httpClientProvider,
@@ -83,12 +90,123 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     {
         super(httpClientProvider, authenticationDetailsProvider, baseUrl);
         this.userDataService = userDataService;
+        this.userGroups = new HashMap<String, Double>(7);
+    }
+
+    /**
+     * @param ignoreExistingUsers whether or not to ignore existing users when
+     *            creating. If set to true the event will be successful when
+     *            executed. If set to false, an exception will be thrown when
+     *            user already exists.
+     */
+    public void setIgnoreExistingUsers(boolean ignoreExistingUsers)
+    {
+        this.ignoreExistingUsers = ignoreExistingUsers;
+    }
+    
+    /**
+     * A description of the groups users should be added to with percentage chances.
+     * The following string:
+     * <pre>
+     *    SITE_ADMINISTRATORS:0.05, DATA_ANALYSTS:0.25
+     * </pre>
+     * will result in users having a 5% chance of being assigned to the 'SITE_ADMINISTRATORS' group
+     * and a 25% chance of being assigned to the 'DATA_ANALYSTS' group.  The group assignments are
+     * always considered separately i.e. being assigned to one group does not change the chances of
+     * being assigned to another group.
+     * 
+     * @param userGroupStr          a string description of groups to assign users to
+     * 
+     * @throws IllegalArgumentException     if the input string is not well-formed
+     */
+    public void setUserGroups(String userGroupStr)
+    {
+        if (userGroupStr == null)
+        {
+            throw new IllegalArgumentException("'userGroups' may not be null.");
+        }
+        // Split by comma
+        StringTokenizer commaTokenizer = new StringTokenizer(userGroupStr, ",");
+        while (commaTokenizer.hasMoreTokens())
+        {
+            String groupAndChance = commaTokenizer.nextToken();
+            groupAndChance = groupAndChance.trim();
+            StringTokenizer colonTokenizer = new StringTokenizer(groupAndChance, ":");
+            double chance = 1.0;
+            if (colonTokenizer.countTokens() == 0)
+            {
+                // Nothing here e.g. " ,,,"
+                continue;
+            }
+            String group = colonTokenizer.nextToken().trim();
+            if (group.length() == 0)
+            {
+                // No group name present e.g. " :0.4"
+                continue;
+            }
+            if (colonTokenizer.hasMoreTokens())
+            {
+                String groupChanceStr = colonTokenizer.nextToken().trim();
+                try
+                {
+                    chance = Double.parseDouble(groupChanceStr);
+                }
+                catch (NumberFormatException e)
+                {
+                    throw new IllegalArgumentException("'userGroups' format is 'GROUP1:CHANCE1, GROUP2:CHANCE2' where the chances are values between 0 and 1.");
+                }
+            }
+            // else there is no chance specified, so we assume 1.0
+            if (chance > 1.0)
+            {
+                chance = 1.0;
+            }
+            else if (chance < 0.0)
+            {
+                chance = 0.0;
+            }
+            
+            // Store the chance
+            userGroups.put(group, chance);
+        }
+    }
+    
+    /**
+     * @deprecated use for testing only
+     */
+    @Deprecated
+    public Map<String, Double> getUserGroups()
+    {
+        return new HashMap<String, Double>(this.userGroups);        // Copy for safety
+    }
+    
+    /**
+     * Using the current {@link #setUserGroups(String) user group chances}, generate a set of random groups
+     * according to the chances.
+     */
+    public Set<String> getRandomGroups()
+    {
+        Set<String> groups = new HashSet<String>();
+        for (Map.Entry<String, Double> groupChance : userGroups.entrySet())
+        {
+            String group = groupChance.getKey();
+            double chance = groupChance.getValue();     // unboxed but any NPE will be a bug in this class
+            // See if we use this group or not
+            if (Math.random() < chance)
+            {
+                // We can use it
+                groups.add(group);
+            }
+        }
+        return groups;
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public EventResult processEvent(Event event) throws Exception
     {
+        super.suspendTimer();
+        
         String username = (String) event.getData();
         
         EventResult eventResult = null;
@@ -113,6 +231,8 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
         json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
 
+        // Restart timer
+        super.resumeTimer();
         HttpPost createUser = new HttpPost(getFullUrlForPath(CreateUser.PEOPLE_URL));
         StringEntity content = JSONUtil.setMessageBody(json);
         createUser.setEntity(content);
@@ -122,6 +242,8 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
                 createUser,
                 SimpleHttpRequestCallback.getInstance());
         StatusLine httpStatus = httpResponse.getStatusLine();
+        // Pause timer
+        super.suspendTimer();
 
         // Expecting "OK" status
         if (httpStatus.getStatusCode() != HttpStatus.SC_OK)
@@ -156,16 +278,5 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         }
 
         return eventResult;
-    }
-
-    /**
-     * @param ignoreExistingUsers whether or not to ignore existing users when
-     *            creating. If set to true the event will be successful when
-     *            executed. If set to false, an exception will be thrown when
-     *            user already exists.
-     */
-    public void setIgnoreExistingUsers(boolean ignoreExistingUsers)
-    {
-        this.ignoreExistingUsers = ignoreExistingUsers;
     }
 }

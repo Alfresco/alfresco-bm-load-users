@@ -96,9 +96,8 @@
          <!-- When user already exists, event is considered as successful by setting this property -->
          <property name="ignoreExistingUsers" value="true" />
     </bean>
-    <bean id="event.usersCreated" class="org.alfresco.bm.event.RenameEventProcessor" parent="event.base" >
-        <constructor-arg name="outputEventName" value="checkUsers" />
-        <property name="chart" value="false" />
+    <bean id="event.usersCreated" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+        <constructor-arg name="newEventName" value="checkUsers" />
     </bean>
     
     <!-- Check that there are users available -->
@@ -108,8 +107,6 @@
         <property name="eventNameUsersReady" value="usersChecked"/>
         <property name="chart" value="false" />
     </bean>
-    <bean id="event.usersChecked" class="org.alfresco.bm.event.DoNothingEventProcessor" parent="event.base" >
-        <property name="chart" value="false" />
-    </bean>
+    <bean id="producer.usersChecked" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
     
 </beans>
