@@ -222,6 +222,9 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
                     false);
             return eventResult;
         }
+        
+        // Assign random groups
+        String[] groups = (String[]) getRandomGroups().toArray();
 
         // Create request body containing user details
         JSONObject json = new JSONObject();
@@ -230,6 +233,10 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         json.put(CreateUser.PEOPLE_JSON_FIRSTNAME, user.getFirstName());
         json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
         json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
+        if (groups.length > 0)
+        {
+            json.put(CreateUser.PEOPLE_JSON_GROUPS, groups);
+        }
 
         // Restart timer
         super.resumeTimer();

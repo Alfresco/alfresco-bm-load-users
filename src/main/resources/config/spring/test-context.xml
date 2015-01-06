@@ -27,7 +27,7 @@
         <constructor-arg name="eventService" ref="eventService" />
         <constructor-arg name="resultService" ref="resultService" />
         <constructor-arg name="eventName" value="createUser" />
-        <constructor-arg name="eventCount" value="${test.user.numberOfUsers}" />
+        <constructor-arg name="eventCount" value="${user.numberOfUsers}" />
     </bean>
 
     <!--                 -->
@@ -67,16 +67,16 @@
     <!-- Start by scheduling user-creation -->
     <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="numberOfUsers" value="${test.user.numberOfUsers}"/>
-        <property name="usersPerDomain" value="${test.user.usersPerDomain}" />
-        <property name="domainPattern" value="${test.user.domainPattern}" />
-        <property name="emailDomainPattern" value="${test.user.emailDomainPattern}" />
-        <property name="firstNamePattern" value="${test.user.firstNamePattern}" />
-        <property name="lastNamePattern" value="${test.user.lastNamePattern}" />
-        <property name="emailAddressPattern" value="${test.user.emailAddressPattern}" />
-        <property name="usernamePattern" value="${test.user.usernamePattern}" />
-        <property name="passwordPattern" value="${test.user.passwordPattern}" />
-        <property name="assumeCreated" value="${test.user.assumeCreated}" />
+        <constructor-arg name="numberOfUsers" value="${user.numberOfUsers}"/>
+        <property name="usersPerDomain" value="${user.usersPerDomain}" />
+        <property name="domainPattern" value="${user.domainPattern}" />
+        <property name="emailDomainPattern" value="${user.emailDomainPattern}" />
+        <property name="firstNamePattern" value="${user.firstNamePattern}" />
+        <property name="lastNamePattern" value="${user.lastNamePattern}" />
+        <property name="emailAddressPattern" value="${user.emailAddressPattern}" />
+        <property name="usernamePattern" value="${user.usernamePattern}" />
+        <property name="passwordPattern" value="${user.passwordPattern}" />
+        <property name="assumeCreated" value="${user.assumeCreated}" />
         <property name="chart" value="false" />
     </bean>
     <bean id="event.usersPrepared" class="org.alfresco.bm.event.RenameEventProcessor" parent="event.base" >
@@ -85,14 +85,15 @@
     </bean>
     <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="numberOfUsers" value="${test.user.numberOfUsers}"/>
-        <property name="creationDelay" value="${test.user.signupDelay}" />
+        <constructor-arg name="numberOfUsers" value="${user.numberOfUsers}"/>
+        <property name="creationDelay" value="${user.signupDelay}" />
         <property name="chart" value="false" />
     </bean>
     
     <!-- Barrier after user-creation scheduling is complete -->
     <bean id="event.createUser" class="org.alfresco.bm.user.CreateUser" parent="event.base.http">
          <constructor-arg name="userDataService" ref="userDataService" />
+         <property name="userGroups" value="${user.groups}" />
          <!-- When user already exists, event is considered as successful by setting this property -->
          <property name="ignoreExistingUsers" value="true" />
     </bean>
@@ -103,7 +104,7 @@
     <!-- Check that there are users available -->
     <bean id="event.checkUsers" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="userCount" value="${test.user.numberOfUsers}" />
+        <constructor-arg name="userCount" value="${user.numberOfUsers}" />
         <property name="eventNameUsersReady" value="usersChecked"/>
         <property name="chart" value="false" />
     </bean>
