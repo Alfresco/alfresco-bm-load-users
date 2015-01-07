@@ -18,11 +18,11 @@
  */
 package org.alfresco.bm.user;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.alfresco.bm.data.DataCreationState;
@@ -114,6 +114,10 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
      * and a 25% chance of being assigned to the 'DATA_ANALYSTS' group.  The group assignments are
      * always considered separately i.e. being assigned to one group does not change the chances of
      * being assigned to another group.
+     * <p/>
+     * <b>NOTE:</b> The {@link #PEOPLE_URL API used} requires that the group names are prepended with the
+     * <b>GROUP_</b> prefix; this is done automatically and should not be specified here.  Use the group
+     * names as they appear on the administrator's group management screens.
      * 
      * @param userGroupStr          a string description of groups to assign users to
      * 
@@ -172,9 +176,8 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     }
     
     /**
-     * @deprecated use for testing only
+     * Used for testing
      */
-    @Deprecated
     public Map<String, Double> getUserGroups()
     {
         return new HashMap<String, Double>(this.userGroups);        // Copy for safety
@@ -184,9 +187,9 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
      * Using the current {@link #setUserGroups(String) user group chances}, generate a set of random groups
      * according to the chances.
      */
-    public Set<String> getRandomGroups()
+    public List<String> getRandomGroups()
     {
-        Set<String> groups = new HashSet<String>();
+        List<String> groups = new ArrayList<String>(5);
         for (Map.Entry<String, Double> groupChance : userGroups.entrySet())
         {
             String group = groupChance.getKey();
@@ -224,7 +227,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         }
         
         // Assign random groups
-        String[] groups = (String[]) getRandomGroups().toArray();
+        List<String> groups = getRandomGroups();
 
         // Create request body containing user details
         JSONObject json = new JSONObject();
@@ -233,9 +236,14 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         json.put(CreateUser.PEOPLE_JSON_FIRSTNAME, user.getFirstName());
         json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
         json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
-        if (groups.length > 0)
+        if (groups.size() > 0)
         {
-            json.put(CreateUser.PEOPLE_JSON_GROUPS, groups);
+            List<String> prefixedGroups = new ArrayList<String>(groups.size());
+            for (String group : groups)
+            {
+                prefixedGroups.add("GROUP_" + group);
+            }
+            json.put(CreateUser.PEOPLE_JSON_GROUPS, prefixedGroups);
         }
 
         // Restart timer

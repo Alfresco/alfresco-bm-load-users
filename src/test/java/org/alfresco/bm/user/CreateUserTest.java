@@ -22,7 +22,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Set;
+import java.util.List;
 
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
@@ -67,7 +67,6 @@ public class CreateUserTest
     }
     
     @Test
-    @SuppressWarnings("deprecation")
     public void testGroupsEmpty()
     {
         createUser.setUserGroups("");
@@ -75,7 +74,6 @@ public class CreateUserTest
     }
     
     @Test
-    @SuppressWarnings("deprecation")
     public void testGroupsNoChance()
     {
         createUser.setUserGroups("A: , B: ");
@@ -85,7 +83,6 @@ public class CreateUserTest
     }
     
     @Test
-    @SuppressWarnings("deprecation")
     public void testGroupsWithChances()
     {
         createUser.setUserGroups("A : 0.05 , B : 0.8 , C:1.5,D:-0.5");
@@ -100,7 +97,7 @@ public class CreateUserTest
         int maxGroupCount = 0;
         for (int i = 0; i < 1000; i++)
         {
-            Set<String> groups = createUser.getRandomGroups();
+            List<String> groups = createUser.getRandomGroups();
             int groupCount = groups.size();
             if (groupCount > maxGroupCount)
             {

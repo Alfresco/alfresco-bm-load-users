@@ -97,7 +97,7 @@
          <!-- When user already exists, event is considered as successful by setting this property -->
          <property name="ignoreExistingUsers" value="true" />
     </bean>
-    <bean id="event.usersCreated" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+    <bean id="producer.usersCreated" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
         <constructor-arg name="newEventName" value="checkUsers" />
     </bean>
     

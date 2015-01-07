@@ -51,7 +51,8 @@ public class BMEnterpriseSignupTest
     public void setUp()
     {
         testProperties = new Properties();
-        testProperties.setProperty("test.user.lastNamePattern", "BMEnterpriseSignupTest-" + System.currentTimeMillis());
+        testProperties.setProperty("user.lastNamePattern", "BMEnterpriseSignupTest-" + System.currentTimeMillis());
+        testProperties.setProperty("user.groups", "SITE_ADMINISTRATORS:1.0");
     }
     
     @Test
