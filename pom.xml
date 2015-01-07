@@ -12,7 +12,7 @@
 
     <properties>
         <server.version>2.0.3</server.version>
-        <junit.version>4.11</junit.version>
+        <junit.version>4.12</junit.version>
         <bm.tomcat.port>9082</bm.tomcat.port>
         <bm.tomcat.ip>localhost</bm.tomcat.ip>
         <bm.tomcat.url>http://${bm.tomcat.ip}:${bm.tomcat.port}/manager/text</bm.tomcat.url>
