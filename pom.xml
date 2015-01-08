@@ -7,7 +7,7 @@
         <version>2.1</version>
     </parent>
     <artifactId>alfresco-benchmark-tests-ent-signup</artifactId>
-    <version>2.1</version>
+    <version>2.2-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
@@ -45,8 +45,8 @@
         </dependency>
     </dependencies>
     <scm>
-        <connection>scm:svn:http://svn.alfresco.com/repos/alfresco-open-mirror/benchmark/tests/ent-signup/tags/V2.1</connection>
-        <developerConnection>scm:svn:https://svn.alfresco.com/repos/alfresco-enterprise/benchmark/tests/ent-signup/tags/V2.1</developerConnection>
+        <connection>scm:svn:http://svn.alfresco.com/repos/alfresco-open-mirror/benchmark/tests/ent-signup/trunk</connection>
+        <developerConnection>scm:svn:https://svn.alfresco.com/repos/alfresco-enterprise/benchmark/tests/ent-signup/trunk</developerConnection>
     </scm>
     <build>
         <resources>
