@@ -79,9 +79,8 @@
         <property name="assumeCreated" value="${user.assumeCreated}" />
         <property name="chart" value="false" />
     </bean>
-    <bean id="event.usersPrepared" class="org.alfresco.bm.event.RenameEventProcessor" parent="event.base" >
-        <constructor-arg name="outputEventName" value="createUsers" />
-        <property name="chart" value="false" />
+    <bean id="producer.usersPrepared" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+        <constructor-arg name="newEventName" value="createUsers" />
     </bean>
     <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base" >
         <constructor-arg name="userDataService" ref="userDataService" />
