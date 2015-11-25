@@ -4,14 +4,14 @@
     <parent>
         <groupId>org.alfresco</groupId>
         <artifactId>alfresco-benchmark-tests-common</artifactId>
-        <version>2.1</version>
+        <version>3.0</version>
     </parent>
     <artifactId>alfresco-benchmark-tests-ent-signup</artifactId>
     <version>2.3-SNAPSHOT</version>
     <packaging>war</packaging>
 
     <properties>
-        <server.version>2.0.9</server.version>
+        <server.version>2.1.1-SNAPSHOT</server.version>
         <junit.version>4.12</junit.version>
         <bm.tomcat.port>9082</bm.tomcat.port>
         <bm.tomcat.ip>localhost</bm.tomcat.ip>
