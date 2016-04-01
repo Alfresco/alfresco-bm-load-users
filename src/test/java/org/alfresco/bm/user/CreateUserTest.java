@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
+import org.alfresco.bm.test.TestRunService;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
 import org.junit.Before;
@@ -50,8 +51,9 @@ public class CreateUserTest
         AuthenticationDetailsProvider authenticationDetailsProvider = Mockito.mock(AuthenticationDetailsProvider.class);
         String baseUrl = "http://localhost:8080/";
         UserDataService userDataService = Mockito.mock(UserDataService.class);
+        TestRunService testRunService = Mockito.mock(TestRunService.class);
         
-        createUser = new CreateUser(httpClientProvider, authenticationDetailsProvider, baseUrl, userDataService);
+        createUser = new CreateUser(testRunService, httpClientProvider, authenticationDetailsProvider, baseUrl, userDataService);
     }
     
     @Test(expected = IllegalArgumentException.class)

@@ -28,7 +28,12 @@ import java.util.StringTokenizer;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.event.Event;
 import org.alfresco.bm.event.EventResult;
+import org.alfresco.bm.exception.BenchmarkResultException;
 import org.alfresco.bm.http.AuthenticatedHttpEventProcessor;
+import org.alfresco.bm.result.defs.ResultObjectType;
+import org.alfresco.bm.result.defs.ResultOperation;
+import org.alfresco.bm.test.TestRunService;
+import org.alfresco.bm.util.ArgumentCheck;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
 import org.alfresco.http.SimpleHttpRequestCallback;
@@ -61,6 +66,7 @@ import org.json.simple.JSONObject;
  * 
  * @author Frederik Heremans
  * @author Derek Hulley
+ * @author Frank Becker
  * @since 1.1
  */
 public class CreateUser extends AuthenticatedHttpEventProcessor
@@ -81,14 +87,21 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     private UserDataService userDataService;
     private boolean ignoreExistingUsers = false;
     private final Map<String, Double> userGroups;
+    private final TestRunService testRunService;
 
     public CreateUser(
+            TestRunService testRunService, 
             HttpClientProvider httpClientProvider,
             AuthenticationDetailsProvider authenticationDetailsProvider,
             String baseUrl,
             UserDataService userDataService)
     {
         super(httpClientProvider, authenticationDetailsProvider, baseUrl);
+        
+        ArgumentCheck.checkMandatoryObject(testRunService, "testRunService");
+        ArgumentCheck.checkMandatoryObject(userDataService, "userDataService");
+        
+        this.testRunService = testRunService;
         this.userDataService = userDataService;
         this.userGroups = new HashMap<String, Double>(7);
     }
@@ -215,9 +228,21 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         EventResult eventResult = null;
 
         // Look up the user data
+        long tm = System.currentTimeMillis();
+        
         UserData user = userDataService.findUserByUsername(username);
         if (user == null)
         {
+            try
+            {
+                tm = System.currentTimeMillis() - tm;
+                this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Unchanged, 1, tm, null);
+            }
+            catch (BenchmarkResultException ex)
+            {
+                logger.error("Unable to write user result to MongoDB.", ex);
+            }
+
             // User already existed
             eventResult = new EventResult(
                     "User data not found in local database: " + username,
@@ -248,6 +273,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
 
         // Restart timer
         super.resumeTimer();
+        tm = System.currentTimeMillis();
         HttpPost createUser = new HttpPost(getFullUrlForPath(CreateUser.PEOPLE_URL));
         StringEntity content = JSONUtil.setMessageBody(json);
         createUser.setEntity(content);
@@ -265,6 +291,16 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         {
             if (httpStatus.getStatusCode() == HttpStatus.SC_CONFLICT && ignoreExistingUsers)
             {
+                try
+                {
+                    tm = System.currentTimeMillis() - tm;
+                    this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Updated, 1, tm, null);
+                }
+                catch (BenchmarkResultException ex)
+                {
+                    logger.error("Unable to write user result to MongoDB.", ex);
+                }
+
                 // User already existed
                 eventResult = new EventResult(
                         "Ignoring existing user, already present in alfresco: " + username,
@@ -274,6 +310,16 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
             }
             else
             {
+                try 
+                {
+                    tm = System.currentTimeMillis() - tm;
+                    this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Failed, 1, tm, null);
+                }
+                catch (BenchmarkResultException ex)
+                {
+                    logger.error("Unable to write user result to MongoDB.", ex);
+                }
+                
                 // User creation failed
                 String msg = String.format(
                         "Creating user failed, REST-call resulted in status:%d with error %s ",
@@ -286,6 +332,15 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         }
         else
         {
+            try
+            {
+                tm = System.currentTimeMillis() - tm;
+                this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Created, 1, tm, null);
+            }
+            catch (BenchmarkResultException ex)
+            {
+                logger.error("Unable to write user result to MongoDB.", ex);
+            }
             // Event execution was successful
             eventResult = new EventResult("User created in alfresco: " + username, Collections.EMPTY_LIST);
             // User should be usable

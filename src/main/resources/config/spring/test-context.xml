@@ -100,6 +100,7 @@
     
     <!-- Barrier after user-creation scheduling is complete -->
     <bean id="event.createUser" class="org.alfresco.bm.user.CreateUser" parent="event.base.http">
+         <constructor-arg name="testRunService" ref="testRunService" />
          <constructor-arg name="userDataService" ref="userDataService" />
          <property name="userGroups" value="${user.groups}" />
          <!-- When user already exists, event is considered as successful by setting this property -->
