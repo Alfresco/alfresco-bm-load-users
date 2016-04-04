@@ -14,15 +14,6 @@
     <!--
         alfresco-benchmark-tests-ent-signup: Create users on a regular Alfresco Enterprise system
      -->
-    <!-- Application startup properties -->
-    <bean id="appPlaceholderConfigurer" class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer" >
-        <property name="ignoreUnresolvablePlaceholders" value="false"/>
-        <property name="locations">
-            <list>
-                <value>classpath*:config/startup/app.properties</value>
-            </list>
-        </property>
-    </bean>
          
     <!-- Import any application contexts for test runs -->
     <import resource="classpath:config/spring/test-common-context.xml" />

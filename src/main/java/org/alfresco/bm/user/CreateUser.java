@@ -221,80 +221,23 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     @SuppressWarnings("unchecked")
     public EventResult processEvent(Event event) throws Exception
     {
-        super.suspendTimer();
-        
-        String username = (String) event.getData();
-        
-        EventResult eventResult = null;
-
-        // Look up the user data
-        long tm = System.currentTimeMillis();
-        
-        UserData user = userDataService.findUserByUsername(username);
-        if (user == null)
+        try
         {
-            try
-            {
-                tm = System.currentTimeMillis() - tm;
-                this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Unchanged, 1, tm, null);
-            }
-            catch (BenchmarkResultException ex)
-            {
-                logger.error("Unable to write user result to MongoDB.", ex);
-            }
+            // open transaction
+            this.testRunService.openResultData(Thread.currentThread().getName(), ResultObjectType.User);
+            
+            super.suspendTimer();
+            String username = (String) event.getData();
+            EventResult eventResult = null;
 
-            // User already existed
-            eventResult = new EventResult(
-                    "User data not found in local database: " + username,
-                    Collections.EMPTY_LIST,
-                    false);
-            return eventResult;
-        }
-        
-        // Assign random groups
-        List<String> groups = getRandomGroups();
-
-        // Create request body containing user details
-        JSONObject json = new JSONObject();
-        json.put(CreateUser.PEOPLE_JSON_USERNAME, username);
-        json.put(CreateUser.PEOPLE_JSON_LASTNAME, user.getLastName());
-        json.put(CreateUser.PEOPLE_JSON_FIRSTNAME, user.getFirstName());
-        json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
-        json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
-        if (groups.size() > 0)
-        {
-            List<String> prefixedGroups = new ArrayList<String>(groups.size());
-            for (String group : groups)
-            {
-                prefixedGroups.add("GROUP_" + group);
-            }
-            json.put(CreateUser.PEOPLE_JSON_GROUPS, prefixedGroups);
-        }
-
-        // Restart timer
-        super.resumeTimer();
-        tm = System.currentTimeMillis();
-        HttpPost createUser = new HttpPost(getFullUrlForPath(CreateUser.PEOPLE_URL));
-        StringEntity content = JSONUtil.setMessageBody(json);
-        createUser.setEntity(content);
-
-        // Get the status
-        HttpResponse httpResponse = executeHttpMethodAsAdmin(
-                createUser,
-                SimpleHttpRequestCallback.getInstance());
-        StatusLine httpStatus = httpResponse.getStatusLine();
-        // Pause timer
-        super.suspendTimer();
-
-        // Expecting "OK" status
-        if (httpStatus.getStatusCode() != HttpStatus.SC_OK)
-        {
-            if (httpStatus.getStatusCode() == HttpStatus.SC_CONFLICT && ignoreExistingUsers)
+            // Look up the user data
+            UserData user = userDataService.findUserByUsername(username);
+            if (user == null)
             {
                 try
                 {
-                    tm = System.currentTimeMillis() - tm;
-                    this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Updated, 1, tm, null);
+                    // report results
+                    this.testRunService.reportResultData(ResultObjectType.User, ResultOperation.Unchanged, 1);
                 }
                 catch (BenchmarkResultException ex)
                 {
@@ -303,50 +246,114 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
 
                 // User already existed
                 eventResult = new EventResult(
-                        "Ignoring existing user, already present in alfresco: " + username,
-                        Collections.EMPTY_LIST);
-                // User should be OK
-                userDataService.setUserCreationState(username, DataCreationState.Created);
+                        "User data not found in local database: " + username,
+                        Collections.EMPTY_LIST,
+                        false);
+                return eventResult;
+            }
+
+            // Assign random groups
+            List<String> groups = getRandomGroups();
+
+            // Create request body containing user details
+            JSONObject json = new JSONObject();
+            json.put(CreateUser.PEOPLE_JSON_USERNAME, username);
+            json.put(CreateUser.PEOPLE_JSON_LASTNAME, user.getLastName());
+            json.put(CreateUser.PEOPLE_JSON_FIRSTNAME, user.getFirstName());
+            json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
+            json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
+            if (groups.size() > 0)
+            {
+                List<String> prefixedGroups = new ArrayList<String>(groups.size());
+                for (String group : groups)
+                {
+                    prefixedGroups.add("GROUP_" + group);
+                }
+                json.put(CreateUser.PEOPLE_JSON_GROUPS, prefixedGroups);
+            }
+
+            // Restart timer
+            super.resumeTimer();
+
+            HttpPost createUser = new HttpPost(getFullUrlForPath(CreateUser.PEOPLE_URL));
+            StringEntity content = JSONUtil.setMessageBody(json);
+            createUser.setEntity(content);
+
+            // Get the status
+            HttpResponse httpResponse = executeHttpMethodAsAdmin(
+                    createUser,
+                    SimpleHttpRequestCallback.getInstance());
+            StatusLine httpStatus = httpResponse.getStatusLine();
+            // Pause timer
+            super.suspendTimer();
+
+            // Expecting "OK" status
+            if (httpStatus.getStatusCode() != HttpStatus.SC_OK)
+            {
+                if (httpStatus.getStatusCode() == HttpStatus.SC_CONFLICT && ignoreExistingUsers)
+                {
+                    try
+                    {
+                        // report results
+                        this.testRunService.reportResultData(ResultObjectType.User, ResultOperation.Updated, 1);
+                    }
+                    catch (BenchmarkResultException ex)
+                    {
+                        logger.error("Unable to write user result to MongoDB.", ex);
+                    }
+
+                    // User already existed
+                    eventResult = new EventResult(
+                            "Ignoring existing user, already present in alfresco: " + username,
+                            Collections.EMPTY_LIST);
+                    // User should be OK
+                    userDataService.setUserCreationState(username, DataCreationState.Created);
+                }
+                else
+                {
+                    try
+                    {
+                        // report results
+                        this.testRunService.reportResultData(ResultObjectType.User, ResultOperation.Failed, 1);
+                    }
+                    catch (BenchmarkResultException ex)
+                    {
+                        logger.error("Unable to write user result to MongoDB.", ex);
+                    }
+
+                    // User creation failed
+                    String msg = String.format(
+                            "Creating user failed, REST-call resulted in status:%d with error %s ",
+                            httpStatus.getStatusCode(),
+                            httpStatus.getReasonPhrase());
+                    eventResult = new EventResult(msg, false);
+                    // User is unusable
+                    userDataService.setUserCreationState(username, DataCreationState.Failed);
+                }
             }
             else
             {
-                try 
+                try
                 {
-                    tm = System.currentTimeMillis() - tm;
-                    this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Failed, 1, tm, null);
+                    // report results
+                    this.testRunService.reportResultData(ResultObjectType.User, ResultOperation.Created, 1);
                 }
                 catch (BenchmarkResultException ex)
                 {
                     logger.error("Unable to write user result to MongoDB.", ex);
                 }
-                
-                // User creation failed
-                String msg = String.format(
-                        "Creating user failed, REST-call resulted in status:%d with error %s ",
-                        httpStatus.getStatusCode(),
-                        httpStatus.getReasonPhrase());
-                eventResult = new EventResult(msg, false);
-                // User is unusable
-                userDataService.setUserCreationState(username, DataCreationState.Failed);
+                // Event execution was successful
+                eventResult = new EventResult("User created in alfresco: " + username, Collections.EMPTY_LIST);
+                // User should be usable
+                userDataService.setUserCreationState(username, DataCreationState.Created);
             }
-        }
-        else
-        {
-            try
-            {
-                tm = System.currentTimeMillis() - tm;
-                this.testRunService.setResultData(ResultObjectType.User, ResultOperation.Created, 1, tm, null);
-            }
-            catch (BenchmarkResultException ex)
-            {
-                logger.error("Unable to write user result to MongoDB.", ex);
-            }
-            // Event execution was successful
-            eventResult = new EventResult("User created in alfresco: " + username, Collections.EMPTY_LIST);
-            // User should be usable
-            userDataService.setUserCreationState(username, DataCreationState.Created);
-        }
 
-        return eventResult;
+            return eventResult;
+
+        }
+        finally
+        {
+            this.testRunService.commitResultData(Thread.currentThread().getName(), ResultObjectType.User, null);
+        }
     }
 }
