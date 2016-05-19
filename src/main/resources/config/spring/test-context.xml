@@ -106,9 +106,9 @@
         <constructor-arg name="userCount" value="${user.numberOfUsers}" />
         <property name="eventNameUsersReady" value="usersChecked"/>
         <property name="chart" value="false" />
-<!--         <property name="eventNameSelf" value="checkUsers" /> -->
-<!--         <property name="delayRescheduleSelf" value="${user.rescheduleDelay}" /> -->
-<!--         <property name="rescheduleSelf" value="${user.rescheduleSelf}" /> -->
+        <property name="eventNameSelf" value="checkUsers" />
+        <property name="delayRescheduleSelf" value="${user.rescheduleDelay}" />
+        <property name="rescheduleSelf" value="${user.rescheduleSelf}" />
     </bean>
     <bean id="producer.usersChecked" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
     
