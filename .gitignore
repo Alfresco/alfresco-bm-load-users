@@ -1,0 +1,28 @@
+*.class
+
+# Intellij
+.idea/
+*.iml
+*.iws
+
+# Eclipse
+.classpath
+.settings
+.project
+
+# Maven
+target/
+bin/
+*.log
+*.log.*
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Mac
+.DS_Store
+
+# Archetype reused source
+*/archetype/src/main/resources/archetype-resources/src/
