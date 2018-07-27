@@ -24,9 +24,9 @@ Subversion:
 Use the Benchmark Testing with Alfresco page for version compatibility.
 <pre><code>
     Java 1.7.0_51 or later
-    MongoDB 2.6.3 or later installed and running on port 27017 on some server: <mongo-host>
-    A compatible version of the Benchmark Server running on a Tomcat7 at port 9080: <bmserver-host>
-    Alfresco with /alfresco available: <alfresco-host>
+    MongoDB 2.6.3 or later installed and running on port 27017 on some server: mongo-host
+    A compatible version of the Benchmark Server running on a Tomcat7 at port 9080: bmserver-host
+    Alfresco with /alfresco available: alfresco-host
 </code></pre>
 ### Use Maven
 
