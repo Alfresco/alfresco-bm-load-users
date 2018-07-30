@@ -86,3 +86,6 @@ To run the Driver server from maven we again use the tomcat7-maven-plugin. For m
     At any time - usually when the test run completes - click through on the test run.  
     Click the download button and open the CSV file in a spreadsheet.
 </code></pre>
+
+### Contributing guide
+Please use [this guide](CONTRIBUTING.md) to make a contribution to the project.
