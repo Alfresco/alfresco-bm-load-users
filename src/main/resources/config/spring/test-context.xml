@@ -23,7 +23,7 @@
     <!--                 -->
 
     <!-- The CompletionEstimator looking at the process count results -->
-    <bean id="completionEstimator" class="org.alfresco.bm.test.EventCountCompletionEstimator">
+    <bean id="completionEstimator" class="org.alfresco.bm.driver.test.EventCountCompletionEstimator">
         <constructor-arg name="eventService" ref="eventService" />
         <constructor-arg name="resultService" ref="resultService" />
         <constructor-arg name="eventName" value="createUser" />
@@ -79,7 +79,7 @@
         <property name="assumeCreated" value="${user.assumeCreated}" />
         <property name="chart" value="false" />
     </bean>
-    <bean id="producer.usersPrepared" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+    <bean id="producer.usersPrepared" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base" >
         <constructor-arg name="newEventName" value="createUsers" />
     </bean>
     <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base" >
@@ -96,7 +96,7 @@
          <!-- When user already exists, event is considered as successful by setting this property -->
          <property name="ignoreExistingUsers" value="true" />
     </bean>
-    <bean id="producer.usersCreated" class="org.alfresco.bm.event.producer.RedirectEventProducer" parent="producer.base" >
+    <bean id="producer.usersCreated" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base" >
         <constructor-arg name="newEventName" value="checkUsers" />
     </bean>
     
@@ -110,6 +110,6 @@
         <property name="delayRescheduleSelf" value="${user.rescheduleDelay}" />
         <property name="rescheduleSelf" value="${user.rescheduleSelf}" />
     </bean>
-    <bean id="producer.usersChecked" class="org.alfresco.bm.event.producer.TerminateEventProducer" parent="producer.base" />
+    <bean id="producer.usersChecked" class="org.alfresco.bm.driver.event.producer.TerminateEventProducer" parent="producer.base" />
     
 </beans>

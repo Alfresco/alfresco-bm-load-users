@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import org.alfresco.bm.test.TestRunService;
+import org.alfresco.bm.driver.test.TestRunService;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
 import org.junit.Before;

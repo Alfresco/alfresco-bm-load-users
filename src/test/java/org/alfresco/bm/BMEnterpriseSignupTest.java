@@ -27,12 +27,12 @@ package org.alfresco.bm;
 
 import java.util.Properties;
 
-import org.alfresco.bm.event.Event;
-import org.alfresco.bm.event.ResultService;
-import org.alfresco.bm.test.TestRunServicesCache;
-import org.alfresco.bm.tools.BMTestRunner;
-import org.alfresco.bm.tools.BMTestRunnerListenerAdaptor;
-import org.alfresco.mongo.MongoDBForTestsFactory;
+import org.alfresco.bm.driver.event.Event;
+import org.alfresco.bm.common.ResultService;
+import org.alfresco.bm.common.spring.TestRunServicesCache;
+import org.alfresco.bm.common.util.junit.tools.BMTestRunner;
+import org.alfresco.bm.common.util.junit.tools.BMTestRunnerListenerAdaptor;
+import org.alfresco.bm.common.util.junit.tools.MongoDBForTestsFactory;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

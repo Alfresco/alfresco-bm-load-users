@@ -33,8 +33,8 @@ import java.util.Map;
 import java.util.StringTokenizer;
 
 import org.alfresco.bm.data.DataCreationState;
-import org.alfresco.bm.event.Event;
-import org.alfresco.bm.event.EventResult;
+import org.alfresco.bm.driver.event.Event;
+import org.alfresco.bm.common.EventResult;
 import org.alfresco.bm.http.AuthenticatedHttpEventProcessor;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
