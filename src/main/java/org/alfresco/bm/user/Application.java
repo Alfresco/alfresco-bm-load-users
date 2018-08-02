@@ -16,8 +16,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ImportResource;
 
 @SpringBootApplication
-@ImportResource({ "classpath:config/spring/app-context.xml", "classpath:config/spring/test-context.xml" })
-
+@ImportResource({ "classpath:config/spring/app-context.xml" })
 public class Application
 {
     public static void main(String[] args)

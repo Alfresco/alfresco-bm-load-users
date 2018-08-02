@@ -22,7 +22,7 @@
         <dependencies>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-dependencies</artifactId>
+                <artifactId>spring-boot-starter-parent</artifactId>
                 <version>${dependency.spring-boot.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
@@ -86,7 +86,7 @@
                 <includes>
                     <include>**</include>
                 </includes>
-                <filtering>false</filtering>
+                <filtering>true</filtering>
             </resource>
         </resources>
         <plugins>
