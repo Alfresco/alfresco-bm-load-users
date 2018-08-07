@@ -48,6 +48,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
+/**
+ * Event processor that creates a test-user in the alfresco-system based on the
+ * username present in the event and inserts an entry in mongo.
+ * <p/>
+ * <h1>Input</h1><br/>
+ * Username of user to create
+ * <p/>
+ * <h1>Data</h1><br/>
+ * Collection containing users. User* will be marked as created.
+ * <p/>
+ * <h1>Actions</h1><br/>
+ * The user is created in alfresco through V1 REST using the TAS rest api library.
+ * When user already existed in alfresco when processed and
+ * 'ignoreExistingUsers' property is set to true, the event is considered
+ * processed successfully instead of throwing an exception.
+ * <p/>
+ * <h1>Output</h1>
+ * No next event will be scheduled.
+ */
 public class CreateUsersWithRestV1API extends AbstractEventProcessor implements ApplicationContextAware
 {
     private UserDataService userDataService;

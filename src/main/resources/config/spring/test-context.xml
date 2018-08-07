@@ -1,127 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
-    xmlns:context="http://www.springframework.org/schema/context"
-    xmlns:mongo="http://www.springframework.org/schema/data/mongo"
-    xsi:schemaLocation="http://www.springframework.org/schema/context
-          http://www.springframework.org/schema/context/spring-context-3.0.xsd
-          http://www.springframework.org/schema/data/mongo
-          http://www.springframework.org/schema/data/mongo/spring-mongo-1.0.xsd
-          http://www.springframework.org/schema/beans
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
 
- 
-    <!--
-        alfresco-benchmark-tests-ent-signup: Create users on a regular Alfresco Enterprise system
-     -->
-         
     <!-- Import any application contexts for test runs -->
-    <import resource="classpath:config/spring/test-common-context.xml" />
-    
+    <import resource="classpath:config/spring/test-common-context.xml"/>
+
     <!--                 -->
     <!-- Reporting       -->
     <!--                 -->
-
     <!-- The CompletionEstimator looking at the process count results -->
     <bean id="completionEstimator" class="org.alfresco.bm.driver.test.EventCountCompletionEstimator">
-        <constructor-arg name="eventService" ref="eventService" />
-        <constructor-arg name="resultService" ref="resultService" />
-        <constructor-arg name="eventName" value="createUser" />
-        <constructor-arg name="eventCount" value="${user.numberOfUsers}" />
+        <constructor-arg name="eventService" ref="eventService"/>
+        <constructor-arg name="resultService" ref="resultService"/>
+        <constructor-arg name="eventName" value="createUser"/>
+        <constructor-arg name="eventCount" value="${user.numberOfUsers}"/>
     </bean>
 
     <!--                 -->
     <!-- Support Service -->
     <!--                 -->
-
     <bean id="userDataService" class="org.alfresco.bm.user.UserDataServiceImpl">
-        <constructor-arg name="db" ref="testMongoDB" />
-        <constructor-arg name="collection" value="${users.collectionName}" />
+        <constructor-arg name="db" ref="testMongoDB"/>
+        <constructor-arg name="collection" value="${users.collectionName}"/>
     </bean>
 
     <bean id="authenticationDetailsProvider" class="org.alfresco.bm.http.UserDataAutheticationDetailsProvider">
-        <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="adminUserName" value="${alfresco.adminUser}" />
-        <constructor-arg name="adminPassword" value="${alfresco.adminPwd}" />
+        <constructor-arg name="userDataService" ref="userDataService"/>
+        <constructor-arg name="adminUserName" value="${alfresco.adminUser}"/>
+        <constructor-arg name="adminPassword" value="${alfresco.adminPwd}"/>
     </bean>
 
     <!--                 -->
     <!-- EventProcessors -->
     <!--                 -->
-    
-    <!-- Shared HTTP-Client instance provider to have better performance -->
-    <bean id="httpClientProvider" class="org.alfresco.http.SharedHttpClientProvider">
-         <constructor-arg name="maxNumberOfConnections" value="${http.connection.max}" />
-         <constructor-arg name="connectionTimeoutMs" value="${http.connection.timeoutMs}" />
-         <constructor-arg name="socketTimeoutMs" value="${http.socket.timeoutMs}" />
-         <constructor-arg name="socketTtlMs" value="${http.socket.ttlMs}" />
-    </bean>
-
-    <!-- Basic arguments to build event processors that use AuthenticatedHttpEventProcessor -->
-    <bean id="event.base.http" abstract="true" parent="event.base" >
-         <constructor-arg name="httpClientProvider" ref="httpClientProvider" />
-         <constructor-arg name="authenticationDetailsProvider" ref="authenticationDetailsProvider" />
-         <constructor-arg name="baseUrl" value="${alfresco.url}" />
-    </bean>
-    
-     <bean id="event.base.RestV1" abstract="true" parent="event.base" >
-         <constructor-arg name="baseUrl" value="${alfresco.url}" />
+    <bean id="event.base.RestV1" abstract="true" parent="event.base">
+        <constructor-arg name="baseUrl" value="${alfresco.url}"/>
     </bean>
 
     <!-- Start by scheduling user-creation -->
-    <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base" >
-        <constructor-arg name="userDataService" ref="userDataService" />
+    <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService"/>
         <constructor-arg name="numberOfUsers" value="${user.numberOfUsers}"/>
-        <property name="usersPerDomain" value="${user.usersPerDomain}" />
-        <property name="domainPattern" value="${user.domainPattern}" />
-        <property name="emailDomainPattern" value="${user.emailDomainPattern}" />
-        <property name="firstNamePattern" value="${user.firstNamePattern}" />
-        <property name="lastNamePattern" value="${user.lastNamePattern}" />
-        <property name="emailAddressPattern" value="${user.emailAddressPattern}" />
-        <property name="usernamePattern" value="${user.usernamePattern}" />
-        <property name="passwordPattern" value="${user.passwordPattern}" />
-        <property name="assumeCreated" value="${user.assumeCreated}" />
-        <property name="chart" value="false" />
+        <property name="usersPerDomain" value="${user.usersPerDomain}"/>
+        <property name="domainPattern" value="${user.domainPattern}"/>
+        <property name="emailDomainPattern" value="${user.emailDomainPattern}"/>
+        <property name="firstNamePattern" value="${user.firstNamePattern}"/>
+        <property name="lastNamePattern" value="${user.lastNamePattern}"/>
+        <property name="emailAddressPattern" value="${user.emailAddressPattern}"/>
+        <property name="usernamePattern" value="${user.usernamePattern}"/>
+        <property name="passwordPattern" value="${user.passwordPattern}"/>
+        <property name="assumeCreated" value="${user.assumeCreated}"/>
+        <property name="chart" value="false"/>
     </bean>
-    <bean id="producer.usersPrepared" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base" >
-        <constructor-arg name="newEventName" value="createUsers" />
+    <bean id="producer.usersPrepared" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base">
+        <constructor-arg name="newEventName" value="createUsers"/>
     </bean>
-    <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base" >
-        <constructor-arg name="userDataService" ref="userDataService" />
+    <bean id="event.createUsers" class="org.alfresco.bm.user.CreateUsers" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService"/>
         <constructor-arg name="numberOfUsers" value="${user.numberOfUsers}"/>
-        <property name="creationDelay" value="${user.signupDelay}" />
-        <property name="chart" value="false" />
-    </bean>
-    
-    <!-- Barrier after user-creation scheduling is complete
-    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUser" parent="event.base.http">
-         <constructor-arg name="userDataService" ref="userDataService" />
-         <property name="userGroupsMap" value="${user.groups}" />
-         < !  - - When user already exists, event is considered as successful by setting this property - - >
-         <property name="ignoreExistingUsers" value="true" />
-    </bean>
-        -->
-    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base.RestV1">
-        <property name="userDataService" ref="userDataService" />
-        <property name="userGroups" value="${user.groups}" />
-        <!-- When user already exists, event is considered as successful by setting this property -->
-        <property name="ignoreExistingUsers" value="true" />
+        <property name="creationDelay" value="${user.signupDelay}"/>
+        <property name="chart" value="false"/>
     </bean>
 
-    <bean id="producer.usersCreated" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base" >
-        <constructor-arg name="newEventName" value="checkUsers" />
+    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base.RestV1">
+        <property name="userDataService" ref="userDataService"/>
+        <property name="userGroups" value="${user.groups}"/>
+        <!-- When user already exists, event is considered as successful by setting this property -->
+        <property name="ignoreExistingUsers" value="true"/>
     </bean>
-    
+
+    <bean id="producer.usersCreated" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base">
+        <constructor-arg name="newEventName" value="checkUsers"/>
+    </bean>
+
     <!-- Check that there are users available -->
-    <bean id="event.checkUsers" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base" >
-        <constructor-arg name="userDataService" ref="userDataService" />
-        <constructor-arg name="userCount" value="${user.numberOfUsers}" />
+    <bean id="event.checkUsers" class="org.alfresco.bm.user.CheckUserCountEventProcessor" parent="event.base">
+        <constructor-arg name="userDataService" ref="userDataService"/>
+        <constructor-arg name="userCount" value="${user.numberOfUsers}"/>
         <property name="eventNameUsersReady" value="usersChecked"/>
-        <property name="chart" value="false" />
-        <property name="eventNameSelf" value="checkUsers" />
-        <property name="delayRescheduleSelf" value="${user.rescheduleDelay}" />
-        <property name="rescheduleSelf" value="${user.rescheduleSelf}" />
+        <property name="chart" value="false"/>
+        <property name="eventNameSelf" value="checkUsers"/>
+        <property name="delayRescheduleSelf" value="${user.rescheduleDelay}"/>
+        <property name="rescheduleSelf" value="${user.rescheduleSelf}"/>
     </bean>
-    <bean id="producer.usersChecked" class="org.alfresco.bm.driver.event.producer.TerminateEventProducer" parent="producer.base" />
-    
+    <bean id="producer.usersChecked" class="org.alfresco.bm.driver.event.producer.TerminateEventProducer" parent="producer.base"/>
+
 </beans>

@@ -4,37 +4,30 @@
  * %%
  * Copyright (C) 2005 - 2018 Alfresco Software Limited
  * %%
- * This file is part of the Alfresco software. 
- * If the software was purchased under a paid Alfresco license, the terms of 
- * the paid license agreement will prevail.  Otherwise, the software is 
+ * This file is part of the Alfresco software.
+ * If the software was purchased under a paid Alfresco license, the terms of
+ * the paid license agreement will prevail.  Otherwise, the software is
  * provided under the following open source license terms:
- * 
+ *
  * Alfresco is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * Alfresco is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 package org.alfresco.bm.user;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
-
+import org.alfresco.bm.common.EventResult;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.driver.event.Event;
-import org.alfresco.bm.common.EventResult;
 import org.alfresco.bm.http.AuthenticatedHttpEventProcessor;
 import org.alfresco.http.AuthenticationDetailsProvider;
 import org.alfresco.http.HttpClientProvider;
@@ -46,6 +39,13 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.json.simple.JSONObject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * Event processor that creates a test-user in the alfresco-system based on the
@@ -65,10 +65,11 @@ import org.json.simple.JSONObject;
  * <p/>
  * <h1>Output</h1>
  * No next event will be scheduled.
- * 
+ *
  * @author Frederik Heremans
  * @author Derek Hulley
  * @since 1.1
+ * @deprecated
  */
 public class CreateUser extends AuthenticatedHttpEventProcessor
 {
@@ -89,11 +90,8 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     private boolean ignoreExistingUsers = false;
     private final Map<String, Double> userGroups;
 
-    public CreateUser(
-            HttpClientProvider httpClientProvider,
-            AuthenticationDetailsProvider authenticationDetailsProvider,
-            String baseUrl,
-            UserDataService userDataService)
+    public CreateUser(HttpClientProvider httpClientProvider, AuthenticationDetailsProvider authenticationDetailsProvider, String baseUrl,
+        UserDataService userDataService)
     {
         super(httpClientProvider, authenticationDetailsProvider, baseUrl);
         this.userDataService = userDataService;
@@ -102,15 +100,15 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
 
     /**
      * @param ignoreExistingUsers whether or not to ignore existing users when
-     *            creating. If set to true the event will be successful when
-     *            executed. If set to false, an exception will be thrown when
-     *            user already exists.
+     *                            creating. If set to true the event will be successful when
+     *                            executed. If set to false, an exception will be thrown when
+     *                            user already exists.
      */
     public void setIgnoreExistingUsers(boolean ignoreExistingUsers)
     {
         this.ignoreExistingUsers = ignoreExistingUsers;
     }
-    
+
     /**
      * A description of the groups users should be added to with percentage chances.
      * The following string:
@@ -125,10 +123,9 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
      * <b>NOTE:</b> The {@link #PEOPLE_URL API used} requires that the group names are prepended with the
      * <b>GROUP_</b> prefix; this is done automatically and should not be specified here.  Use the group
      * names as they appear on the administrator's group management screens.
-     * 
-     * @param userGroupStr          a string description of groups to assign users to
-     * 
-     * @throws IllegalArgumentException     if the input string is not well-formed
+     *
+     * @param userGroupStr a string description of groups to assign users to
+     * @throws IllegalArgumentException if the input string is not well-formed
      */
     public void setUserGroups(String userGroupStr)
     {
@@ -176,12 +173,12 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
             {
                 chance = 0.0;
             }
-            
+
             // Store the chance
             userGroups.put(group, chance);
         }
     }
-    
+
     /**
      * Used for testing
      */
@@ -189,7 +186,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     {
         return new HashMap<String, Double>(this.userGroups);        // Copy for safety
     }
-    
+
     /**
      * Using the current {@link #setUserGroups(String) user group chances}, generate a set of random groups
      * according to the chances.
@@ -216,9 +213,9 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
     public EventResult processEvent(Event event) throws Exception
     {
         super.suspendTimer();
-        
+
         String username = (String) event.getData();
-        
+
         EventResult eventResult = null;
 
         // Look up the user data
@@ -226,13 +223,10 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         if (user == null)
         {
             // User already existed
-            eventResult = new EventResult(
-                    "User data not found in local database: " + username,
-                    Collections.EMPTY_LIST,
-                    false);
+            eventResult = new EventResult("User data not found in local database: " + username, Collections.EMPTY_LIST, false);
             return eventResult;
         }
-        
+
         // Assign random groups
         List<String> groups = getRandomGroups();
 
@@ -260,9 +254,7 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
         createUser.setEntity(content);
 
         // Get the status
-        HttpResponse httpResponse = executeHttpMethodAsAdmin(
-                createUser,
-                SimpleHttpRequestCallback.getInstance());
+        HttpResponse httpResponse = executeHttpMethodAsAdmin(createUser, SimpleHttpRequestCallback.getInstance());
         StatusLine httpStatus = httpResponse.getStatusLine();
         // Pause timer
         super.suspendTimer();
@@ -273,19 +265,15 @@ public class CreateUser extends AuthenticatedHttpEventProcessor
             if (httpStatus.getStatusCode() == HttpStatus.SC_CONFLICT && ignoreExistingUsers)
             {
                 // User already existed
-                eventResult = new EventResult(
-                        "Ignoring existing user, already present in alfresco: " + username,
-                        Collections.EMPTY_LIST);
+                eventResult = new EventResult("Ignoring existing user, already present in alfresco: " + username, Collections.EMPTY_LIST);
                 // User should be OK
                 userDataService.setUserCreationState(username, DataCreationState.Created);
             }
             else
             {
                 // User creation failed
-                String msg = String.format(
-                        "Creating user failed, REST-call resulted in status:%d with error %s ",
-                        httpStatus.getStatusCode(),
-                        httpStatus.getReasonPhrase());
+                String msg = String
+                    .format("Creating user failed, REST-call resulted in status:%d with error %s ", httpStatus.getStatusCode(), httpStatus.getReasonPhrase());
                 eventResult = new EventResult(msg, false);
                 // User is unusable
                 userDataService.setUserCreationState(username, DataCreationState.Failed);
