@@ -26,8 +26,14 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     private boolean ignoreExistingUsers = false;
     private String userGroups;
     private Map<String, Double> userGroupsMap;
+    private String baseUrl;
 
     private ApplicationContext context;
+    
+    
+    public CreateUsersWithRestV1API(String baseUrl){
+    	this.baseUrl = baseUrl;
+    }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
@@ -74,6 +80,7 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
 
             // Restart timer
             super.resumeTimer();
+            restClient.configureRequestSpec().setBaseUri(baseUrl);
             personModel = restClient.authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
             String code = restClient.getStatusCode();
             super.suspendTimer();

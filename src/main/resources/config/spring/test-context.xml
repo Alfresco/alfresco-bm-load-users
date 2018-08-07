@@ -63,6 +63,10 @@
          <constructor-arg name="authenticationDetailsProvider" ref="authenticationDetailsProvider" />
          <constructor-arg name="baseUrl" value="${alfresco.url}" />
     </bean>
+    
+     <bean id="event.base.RestV1" abstract="true" parent="event.base" >
+         <constructor-arg name="baseUrl" value="${alfresco.url}" />
+    </bean>
 
     <!-- Start by scheduling user-creation -->
     <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base" >
@@ -97,7 +101,7 @@
          <property name="ignoreExistingUsers" value="true" />
     </bean>
         -->
-    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base">
+    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base.RestV1">
         <property name="userDataService" ref="userDataService" />
         <property name="userGroups" value="${user.groups}" />
         <!-- When user already exists, event is considered as successful by setting this property -->
