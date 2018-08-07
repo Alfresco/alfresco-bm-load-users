@@ -239,9 +239,9 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
      *
      * @throws IllegalArgumentException if the userGroups string is not well-formed
      */
-    private void initializeUserGroupsMap()
+    void initializeUserGroupsMap()
     {
-        if (userGroups == null || userGroups.isEmpty())
+        if (userGroups == null)
         {
             throw new IllegalArgumentException("'userGroups' may not be null.");
         }
