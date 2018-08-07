@@ -1,3 +1,28 @@
+/*
+ * #%L
+ * Alfresco Users Load BMF Driver
+ * %%
+ * Copyright (C) 2005 - 2018 Alfresco Software Limited
+ * %%
+ * This file is part of the Alfresco software.
+ * If the software was purchased under a paid Alfresco license, the terms of
+ * the paid license agreement will prevail.  Otherwise, the software is
+ * provided under the following open source license terms:
+ *
+ * Alfresco is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alfresco is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with Alfresco. If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
 package org.alfresco.bm.user;
 
 import org.alfresco.bm.common.EventResult;
@@ -5,14 +30,17 @@ import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.driver.event.AbstractEventProcessor;
 import org.alfresco.bm.driver.event.Event;
 import org.alfresco.rest.core.RestWrapper;
+import org.alfresco.rest.model.RestGroupMember;
 import org.alfresco.rest.model.RestPersonModel;
 import org.alfresco.utility.data.DataUser;
 import org.alfresco.utility.model.UserModel;
-import org.json.simple.JSONObject;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.http.HttpStatus;
 
+import javax.json.Json;
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,12 +55,15 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     private String userGroups;
     private Map<String, Double> userGroupsMap;
     private String baseUrl;
+    private DataUser dataUser;
+    private RestWrapper restClient;
+    private UserModel adminUser;
 
     private ApplicationContext context;
-    
-    
-    public CreateUsersWithRestV1API(String baseUrl){
-    	this.baseUrl = baseUrl;
+
+    public CreateUsersWithRestV1API(String baseUrl)
+    {
+        this.baseUrl = baseUrl;
     }
 
     @Override
@@ -43,7 +74,10 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         if (userGroupsMap == null)
         {
             initializeUserGroupsMap();
-//
+        }
+        if (restClient == null)
+        {
+            initializeRestClient();
         }
 
         String username = (String) event.getData();
@@ -63,11 +97,6 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
 
         try
         {
-
-            DataUser dataUser = (DataUser) this.context.getBean("dataUser");
-            RestWrapper restClient = (RestWrapper) this.context.getBean("restWrapper");
-
-            UserModel adminUser = dataUser.getAdminUser();
             RestPersonModel personModel = RestPersonModel.getRandomPersonModel();
             personModel.setEmail(user.getEmail());
             personModel.setFirstName(user.getFirstName());
@@ -80,17 +109,19 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
 
             // Restart timer
             super.resumeTimer();
-            restClient.configureRequestSpec().setBaseUri(baseUrl);
             personModel = restClient.authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
             String code = restClient.getStatusCode();
             super.suspendTimer();
 
-            if ("201".equals(code))
+            if (HttpStatus.CREATED.toString().equals(code))
             {
+                //associate user with some groups.
+                handleGroupsAssociation(username, groups, restClient);
+
                 //success, created the user
                 return markAsSuccess(username);
             }
-            else if ("409".equals(code))
+            else if (HttpStatus.CONFLICT.toString().equals(code))
             {
                 if (isIgnoreExistingUsers())
                 {
@@ -113,6 +144,54 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         {
             logger.error(e.getMessage(), e);
             return markAsFailure(username);
+        }
+    }
+
+    private void initializeRestClient()
+    {
+        dataUser = (DataUser) this.context.getBean("dataUser");
+        restClient = (RestWrapper) this.context.getBean("restWrapper");
+        restClient.configureRequestSpec().setBaseUri(baseUrl);
+        adminUser = dataUser.getAdminUser();
+    }
+
+    private void handleGroupsAssociation(String username, List<String> groups, RestWrapper restClient)
+    {
+        // NOTE that this code currently does not create the missing groups. It assumes they are present on the Alfresco system
+        // failing to associate the user with a group is not considered a problem
+        for (String group : groups)
+        {
+            try
+            {
+                createUserMembership(username, restClient, group);
+            }
+            catch (Exception e)
+            {
+                // just log it, we don't care that much
+                logger.error("error adding user to a group: " + group + " message: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    private void createUserMembership(String username, RestWrapper restClient, String group) throws Exception
+    {
+        JsonObject groupMembershipBody = Json.createObjectBuilder().add("id", username).add("memberType", "PERSON").build();
+        String groupMembershipBodyCreate = groupMembershipBody.toString();
+        //MembershipCreation
+        super.resumeTimer();
+        RestGroupMember groupMembership = restClient.withCoreAPI().usingGroups().createGroupMembership("GROUP_" + group, groupMembershipBodyCreate);
+        String createGroupCode = restClient.getStatusCode();
+        super.suspendTimer();
+
+        if (HttpStatus.CREATED.toString().equals(createGroupCode))
+        {
+            //log this as success
+            logger.info("User: " + username + " added to group: " + group);
+        }
+        else
+        {
+            //log this as failure
+            logger.warn("FAILED to add user: " + username + " to group: " + group + ". Make sure this group is created on your Alfresco system!");
         }
     }
 
