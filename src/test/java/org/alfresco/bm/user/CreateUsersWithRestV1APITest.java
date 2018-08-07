@@ -31,75 +31,71 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
-import org.alfresco.bm.test.TestRunService;
-import org.alfresco.http.AuthenticationDetailsProvider;
-import org.alfresco.http.HttpClientProvider;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
 
 /**
- * Run the <b>Enterprise Signup</b> tests using the default arguments.
+ * Run the <b>Create users</b> tests using the default arguments.
  * 
  * @author Derek Hulley
  * @since 2.1
  */
 @RunWith(JUnit4.class)
-public class CreateUserTest
+public class CreateUsersWithRestV1APITest
 {
-    private CreateUser createUser;
-    
+    private CreateUsersWithRestV1API createUser;
+
     @Before
     public void setUp()
     {
-        HttpClientProvider httpClientProvider = Mockito.mock(HttpClientProvider.class);
-        AuthenticationDetailsProvider authenticationDetailsProvider = Mockito.mock(AuthenticationDetailsProvider.class);
-        String baseUrl = "http://localhost:8080/";
-        UserDataService userDataService = Mockito.mock(UserDataService.class);
-        
-        createUser = new CreateUser(httpClientProvider, authenticationDetailsProvider, baseUrl, userDataService);
+        createUser = new CreateUsersWithRestV1API("");
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testGroupsNull()
     {
         createUser.setUserGroups(null);
+        createUser.initializeUserGroupsMap();
     }
-    
+
     @Test(expected = IllegalArgumentException.class)
     public void testGroupsNonNumericChance()
     {
         createUser.setUserGroups("A:x");
+        createUser.initializeUserGroupsMap();
     }
-    
+
     @Test
     public void testGroupsEmpty()
     {
         createUser.setUserGroups("");
-        assertEquals(0, createUser.getUserGroups().size());
+        createUser.initializeUserGroupsMap();
+        assertEquals(0, createUser.getUserGroupsMap().size());
     }
-    
+
     @Test
     public void testGroupsNoChance()
     {
         createUser.setUserGroups("A: , B: ");
-        assertEquals(2, createUser.getUserGroups().size());
-        assertEquals(1.0, createUser.getUserGroups().get("A"), 0.01);
-        assertEquals(1.0, createUser.getUserGroups().get("B"), 0.01);
+        createUser.initializeUserGroupsMap();
+        assertEquals(2, createUser.getUserGroupsMap().size());
+        assertEquals(1.0, createUser.getUserGroupsMap().get("A"), 0.01);
+        assertEquals(1.0, createUser.getUserGroupsMap().get("B"), 0.01);
     }
-    
+
     @Test
     public void testGroupsWithChances()
     {
         createUser.setUserGroups("A : 0.05 , B : 0.8 , C:1.5,D:-0.5");
-        assertEquals(4, createUser.getUserGroups().size());
-        assertEquals(0.05, createUser.getUserGroups().get("A"), 0.01);
-        assertEquals(0.80, createUser.getUserGroups().get("B"), 0.01);
-        assertEquals(1.00, createUser.getUserGroups().get("C"), 0.01);
-        assertEquals(0.00, createUser.getUserGroups().get("D"), 0.01);
-        
+        createUser.initializeUserGroupsMap();
+        assertEquals(4, createUser.getUserGroupsMap().size());
+        assertEquals(0.05, createUser.getUserGroupsMap().get("A"), 0.01);
+        assertEquals(0.80, createUser.getUserGroupsMap().get("B"), 0.01);
+        assertEquals(1.00, createUser.getUserGroupsMap().get("C"), 0.01);
+        assertEquals(0.00, createUser.getUserGroupsMap().get("D"), 0.01);
+
         // Check that we sometimes get 3 groups, always get C and never get D
         int minGroupCount = 100;
         int maxGroupCount = 0;
