@@ -10,7 +10,6 @@
 
     <artifactId>alfresco-users-load-bmf-driver</artifactId>
     <version>3.0-SNAPSHOT</version>
-    <packaging>war</packaging>
 
     <properties>
         <java.version>1.8</java.version>
@@ -50,6 +49,17 @@
             <groupId>org.alfresco</groupId>
             <artifactId>alfresco-bmf-util</artifactId>
             <version>${server.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.alfresco.tas</groupId>
+            <artifactId>restapi-test</artifactId>
+            <version>5.2.0-12-SNAPSHOT</version>
+        </dependency>
+        <!-- TODO remove this dependency -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <version>1.3.156</version>
         </dependency>
     </dependencies>
 
