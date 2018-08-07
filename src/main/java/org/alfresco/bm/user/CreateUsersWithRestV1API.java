@@ -37,6 +37,7 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         if (userGroupsMap == null)
         {
             initializeUserGroupsMap();
+//
         }
 
         String username = (String) event.getData();
@@ -51,29 +52,9 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
             eventResult = new EventResult("User data not found in local database: " + username, Collections.EMPTY_LIST, false);
             return eventResult;
         }
-
         // Assign random groups
         List<String> groups = getRandomGroups();
 
-        // Create request body containing user details
-        JSONObject json = new JSONObject();
-        json.put(CreateUser.PEOPLE_JSON_USERNAME, username);
-        json.put(CreateUser.PEOPLE_JSON_LASTNAME, user.getLastName());
-        json.put(CreateUser.PEOPLE_JSON_FIRSTNAME, user.getFirstName());
-        json.put(CreateUser.PEOPLE_JSON_EMAIL, user.getEmail());
-        json.put(CreateUser.PEOPLE_JSON_PASSWORD, user.getPassword());
-        if (groups.size() > 0)
-        {
-            List<String> prefixedGroups = new ArrayList<String>(groups.size());
-            for (String group : groups)
-            {
-                prefixedGroups.add("GROUP_" + group);
-            }
-            json.put(CreateUser.PEOPLE_JSON_GROUPS, prefixedGroups);
-        }
-
-        // Restart timer
-        super.resumeTimer();
         try
         {
 
@@ -91,10 +72,12 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
             personModel.setStatusUpdatedAt(null);
             personModel.setAspectNames(null);
 
+            // Restart timer
+            super.resumeTimer();
             personModel = restClient.authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
             String code = restClient.getStatusCode();
-            System.out.println("user: " + personModel);
-            System.out.println("code is:" + code);
+            super.suspendTimer();
+
             if ("201".equals(code))
             {
                 //success, created the user
@@ -121,7 +104,6 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         }
         catch (Exception e)
         {
-            e.printStackTrace();
             logger.error(e.getMessage(), e);
             return markAsFailure(username);
         }
