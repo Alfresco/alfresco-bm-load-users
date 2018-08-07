@@ -42,13 +42,13 @@ import org.springframework.context.ApplicationContext;
 import java.util.Properties;
 
 /**
- * Run the <b>Enterprise Signup</b> tests using the default arguments.
+ * Run the <b>Users Load BMF driver</b> tests using the default arguments.
  *
  * @author Derek Hulley
- * @since 2.0
+ * @since 3.0
  */
 @RunWith(JUnit4.class)
-public class BMEnterpriseSignupTest
+public class UsersLoadBMFDriverTest
 {
     /**
      * In order to avoid name clashes on the target repo, we need to use a unique last name for each test
@@ -94,7 +94,7 @@ public class BMEnterpriseSignupTest
 
     /**
      * @author Derek Hulley
-     * @see BMEnterpriseSignupTest#runModifiedSignupTwice()
+     * @see UsersLoadBMFDriverTest#runModifiedSignupTwice()
      * @since 2.0
      */
     private class TestRunSignupListener extends BMTestRunnerListenerAdaptor
