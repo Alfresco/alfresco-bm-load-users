@@ -3,7 +3,7 @@
 This project provides the creation of a large number of users in Alfresco, using multiple email domains.
 The user's details are record  in a local data mirror for reuse by subsequent tests.
 
-More information on the <a href="https://community.alfresco.com/docs/DOC-6246">Alfresco Community Site -> Running Benchmark Applications: Alfresco Load users</a>
+More information on the <a href="https://community.alfresco.com/docs/DOC-6246">Alfresco Community Site -> Running Benchmark Applications: Alfresco Sign Up</a>
 * Videos related to the <a href="https://www.youtube.com/watch?v=CXFH_1lFvsk&list=PLktNOqTikHe_Uy6UNIic0U_ga44XK0voi">Benchmark Framework 2.0</a>
 * A video <a href="https://www.youtube.com/watch?v=gQjIYGU5-Kc&index=5&list=PLktNOqTikHe_Uy6UNIic0U_ga44XK0voi"> showing the creation of users and the user data mirror.</a>
 
