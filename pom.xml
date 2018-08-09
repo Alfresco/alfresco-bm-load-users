@@ -8,9 +8,9 @@
         <version>9</version>
     </parent>
 
-    <artifactId>alfresco-users-load-bmf-driver</artifactId>
+    <artifactId>alfresco-bm-load-users</artifactId>
     <version>3.0-SNAPSHOT</version>
-    <name>Alfresco Users Load BMF Driver</name>
+    <name>Alfresco Benchmark Load Users</name>
 
     <properties>
         <server.version>3.0.0-SNAPSHOT</server.version>
@@ -47,7 +47,7 @@
         </dependency>
         <dependency>
             <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-bmf-manager</artifactId>
+            <artifactId>alfresco-bm-manager</artifactId>
             <version>${server.version}</version>
             <classifier>classes</classifier>
         </dependency>
@@ -70,9 +70,9 @@
     </dependencies>
 
     <scm>
-        <connection>scm:git:https://github.com/Alfresco/alfresco-users-load-bmf-driver.git</connection>
-        <developerConnection>scm:git:https://github.com/Alfresco/alfresco-users-load-bmf-driver.git</developerConnection>
-        <url>https://github.com/Alfresco/alfresco-users-load-bmf-driver</url>
+        <connection>scm:git:git@github.com:Alfresco/alfresco-bm-load-users.git</connection>
+        <developerConnection>scm:git:git@github.com:Alfresco/alfresco-bm-load-users.git</developerConnection>
+        <url>https://github.com/Alfresco/alfresco-bm-load-users</url>
         <tag>HEAD</tag>
     </scm>
 

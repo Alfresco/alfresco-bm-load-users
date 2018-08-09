@@ -1,4 +1,4 @@
-###  Alfresco Users Load BMF Driver
+### Alfresco Benchmark Load Users
 
 This project provides the creation of a large number of users in Alfresco, using multiple email domains.
 The user's details are record  in a local data mirror for reuse by subsequent tests.
@@ -11,13 +11,13 @@ More information on the <a href="https://community.alfresco.com/docs/DOC-6246">A
 
 Git:
 
-    git clone https://github.com/Alfresco/alfresco-users-load-bmf-driver.git
-    cd alfresco-users-load-bmf-driver
+    git clone https://github.com/Alfresco/alfresco-bm-load-users.git
+    cd alfresco-bm-load-users
 
 Subversion:
 
-    svn checkout https://github.com/Alfresco/alfresco-users-load-bmf-driver.git
-    cd alfresco-users-load-bmf-driver
+    svn checkout https://github.com/Alfresco/alfresco-bm-load-users.git
+    cd alfresco-bm-load-users
 
 ### Prerequisites
 
@@ -51,7 +51,7 @@ To run the Driver server from maven we again use the tomcat7-maven-plugin. For m
 
 3. Access benchmark server UI
 <pre><code>
-    Browse to http://localhost:9080/alfresco-benchmark-server
+    Browse to http://localhost:9080/alfresco-bm-manager
 </code></pre>
 4. Create a Test
 
