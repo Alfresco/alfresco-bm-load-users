@@ -1,0 +1,32 @@
+version: "3"
+
+services:
+    alfresco-bm-load-users-1:
+        image: ${REGISTRY}alfresco/alfresco-bm-load-users:${ALFRESCO_BM_LOAD_USERS_TAG}
+        environment:
+            JAVA_OPTS : "
+                -Dmongo.config.host=mongo
+                -Dserver.port=9082
+                "
+        ports:
+            - 9082:9082
+
+    alfresco-bm-load-users-2:
+        image: ${REGISTRY}alfresco/alfresco-bm-load-users:${ALFRESCO_BM_LOAD_USERS_TAG}
+        environment:
+            JAVA_OPTS : "
+                -Dmongo.config.host=mongo
+                -Dserver.port=9083
+                "
+        ports:
+            - 9083:9083
+
+    # alfresco-bm-responsivness:
+    #     image: ${REGISTRY}alfresco-bm-restapi-responsivness:${ALFRESCO_BM_RESPONSIVNESS_TAG}
+    #     environment:
+    #         JAVA_OPTS : "
+    #             -Dmongo.config.host=mongo
+    #             -Dserver.port=9083
+    #             "
+    #     ports:
+    #         - 9084:9084
