@@ -1,6 +1,6 @@
 /*
  * #%L
- * Alfresco Users Load BMF Driver
+ * Alfresco Benchmark Load Users
  * %%
  * Copyright (C) 2005 - 2018 Alfresco Software Limited
  * %%
