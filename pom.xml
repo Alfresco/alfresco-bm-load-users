@@ -53,7 +53,7 @@
         </dependency>
         <dependency>
             <groupId>org.alfresco</groupId>
-            <artifactId>alfresco-bmf-util</artifactId>
+            <artifactId>alfresco-bm-util</artifactId>
             <version>${server.version}</version>
         </dependency>
         <dependency>
