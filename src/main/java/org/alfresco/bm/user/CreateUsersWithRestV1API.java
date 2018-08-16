@@ -78,19 +78,17 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     private boolean ignoreExistingUsers = false;
     private String userGroups;
     private Map<String, Double> userGroupsMap;
-    private String alfrescoBaseUrl;
-    private Integer alfrescoPort;
+    private String alfrescoUrl;
+
     private DataUser dataUser;
     private RestWrapper restClient;
     private UserModel adminUser;
 
     private ApplicationContext context;
 
-    public CreateUsersWithRestV1API(String alfrescoUrl) throws MalformedURLException 
+    public void setAlfrescoUrl(String alfrescoUrl)
     {
-        URL url = new URL(alfrescoUrl);
-        this.alfrescoBaseUrl = url.getProtocol() + "://" + url.getHost();
-        this.alfrescoPort = url.getPort();
+        this.alfrescoUrl = alfrescoUrl;
     }
 
     @Override
@@ -102,10 +100,8 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         {
             initializeUserGroupsMap();
         }
-        if (restClient == null)
-        {
-            initializeRestClient();
-        }
+
+        initializeRestClient();
 
         String username = (String) event.getData();
 
@@ -174,13 +170,14 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         }
     }
 
-    private void initializeRestClient()
+    private void initializeRestClient() throws MalformedURLException
     {
+        URL url = new URL(alfrescoUrl);
         dataUser = (DataUser) this.context.getBean("dataUser");
         restClient = (RestWrapper) this.context.getBean("restWrapper");
-        RestAssured.baseURI = alfrescoBaseUrl;
-        RestAssured.port = alfrescoPort;
-        restClient.configureRequestSpec().setBaseUri(alfrescoBaseUrl).setPort(alfrescoPort);
+        RestAssured.baseURI = url.getProtocol() + "://" + url.getHost();
+        RestAssured.port = url.getPort();
+        restClient.configureRequestSpec().setBaseUri(RestAssured.baseURI).setPort(RestAssured.port);
         adminUser = dataUser.getAdminUser();
     }
 

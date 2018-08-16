@@ -51,7 +51,7 @@ public class CreateUsersWithRestV1APITest
     @Before
     public void setUp() throws MalformedURLException
     {
-        createUser = new CreateUsersWithRestV1API("");
+        createUser = new CreateUsersWithRestV1API();
     }
 
     @Test(expected = IllegalArgumentException.class)
