@@ -39,8 +39,13 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 
+import com.jayway.restassured.RestAssured;
+
 import javax.json.Json;
 import javax.json.JsonObject;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -73,16 +78,19 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     private boolean ignoreExistingUsers = false;
     private String userGroups;
     private Map<String, Double> userGroupsMap;
-    private String baseUrl;
+    private String alfrescoBaseUrl;
+    private Integer alfrescoPort;
     private DataUser dataUser;
     private RestWrapper restClient;
     private UserModel adminUser;
 
     private ApplicationContext context;
 
-    public CreateUsersWithRestV1API(String baseUrl)
+    public CreateUsersWithRestV1API(String alfrescoUrl) throws MalformedURLException 
     {
-        this.baseUrl = baseUrl;
+        URL url = new URL(alfrescoUrl);
+        this.alfrescoBaseUrl = url.getProtocol() + "://" + url.getHost();
+        this.alfrescoPort = url.getPort();
     }
 
     @Override
@@ -170,7 +178,9 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     {
         dataUser = (DataUser) this.context.getBean("dataUser");
         restClient = (RestWrapper) this.context.getBean("restWrapper");
-        restClient.configureRequestSpec().setBaseUri(baseUrl);
+        RestAssured.baseURI = alfrescoBaseUrl;
+        RestAssured.port = alfrescoPort;
+        restClient.configureRequestSpec().setBaseUri(alfrescoBaseUrl).setPort(alfrescoPort);
         adminUser = dataUser.getAdminUser();
     }
 

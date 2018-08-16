@@ -36,7 +36,7 @@
     <!-- EventProcessors -->
     <!--                 -->
     <bean id="event.base.RestV1" abstract="true" parent="event.base">
-        <constructor-arg name="baseUrl" value="${alfresco.url}"/>
+        <constructor-arg name="alfrescoUrl" value="${alfresco.url}"/>
     </bean>
 
     <!-- Start by scheduling user-creation -->

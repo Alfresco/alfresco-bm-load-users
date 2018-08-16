@@ -29,6 +29,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 import org.junit.Before;
@@ -48,7 +49,7 @@ public class CreateUsersWithRestV1APITest
     private CreateUsersWithRestV1API createUser;
 
     @Before
-    public void setUp()
+    public void setUp() throws MalformedURLException
     {
         createUser = new CreateUsersWithRestV1API("");
     }
