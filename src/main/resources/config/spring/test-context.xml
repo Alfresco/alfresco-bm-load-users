@@ -67,6 +67,8 @@
         <!-- When user already exists, event is considered as successful by setting this property -->
         <property name="ignoreExistingUsers" value="true"/>
         <property name="alfrescoUrl" value="${alfresco.url}"/>
+        <property name="alfrescoAdminUsername" value="${alfresco.adminUser}"/>
+        <property name="alfrescoAdminPassword" value="${alfresco.adminPwd}"/>
     </bean>
 
     <bean id="producer.usersCreated" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base">
