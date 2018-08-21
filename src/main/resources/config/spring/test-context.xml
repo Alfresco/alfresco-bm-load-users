@@ -35,9 +35,6 @@
     <!--                 -->
     <!-- EventProcessors -->
     <!--                 -->
-    <bean id="event.base.RestV1" abstract="true" parent="event.base">
-        <constructor-arg name="baseUrl" value="${alfresco.url}"/>
-    </bean>
 
     <!-- Start by scheduling user-creation -->
     <bean id="event.start" class="org.alfresco.bm.user.PrepareUsers" parent="event.base">
@@ -64,11 +61,14 @@
         <property name="chart" value="false"/>
     </bean>
 
-    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base.RestV1">
+    <bean id="event.createUser" class="org.alfresco.bm.user.CreateUsersWithRestV1API" parent="event.base">
         <property name="userDataService" ref="userDataService"/>
         <property name="userGroups" value="${user.groups}"/>
         <!-- When user already exists, event is considered as successful by setting this property -->
         <property name="ignoreExistingUsers" value="true"/>
+        <property name="alfrescoUrl" value="${alfresco.url}"/>
+        <property name="alfrescoAdminUsername" value="${alfresco.adminUser}"/>
+        <property name="alfrescoAdminPassword" value="${alfresco.adminPwd}"/>
     </bean>
 
     <bean id="producer.usersCreated" class="org.alfresco.bm.driver.event.producer.RedirectEventProducer" parent="producer.base">

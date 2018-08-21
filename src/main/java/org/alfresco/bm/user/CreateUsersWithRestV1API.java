@@ -25,6 +25,18 @@
  */
 package org.alfresco.bm.user;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import javax.json.Json;
+import javax.json.JsonObject;
+
 import org.alfresco.bm.common.EventResult;
 import org.alfresco.bm.data.DataCreationState;
 import org.alfresco.bm.driver.event.AbstractEventProcessor;
@@ -32,21 +44,13 @@ import org.alfresco.bm.driver.event.Event;
 import org.alfresco.rest.core.RestWrapper;
 import org.alfresco.rest.model.RestGroupMember;
 import org.alfresco.rest.model.RestPersonModel;
-import org.alfresco.utility.data.DataUser;
 import org.alfresco.utility.model.UserModel;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.http.HttpStatus;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import com.jayway.restassured.RestAssured;
 
 /**
  * Event processor that creates a test-user in the alfresco-system based on the
@@ -73,16 +77,27 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     private boolean ignoreExistingUsers = false;
     private String userGroups;
     private Map<String, Double> userGroupsMap;
-    private String baseUrl;
-    private DataUser dataUser;
+    private String alfrescoUrl;
+    private String alfrescoAdminUsername;
+    private String alfrescoAdminPassword;
     private RestWrapper restClient;
     private UserModel adminUser;
 
     private ApplicationContext context;
 
-    public CreateUsersWithRestV1API(String baseUrl)
+    public void setAlfrescoUrl(String alfrescoUrl)
     {
-        this.baseUrl = baseUrl;
+        this.alfrescoUrl = alfrescoUrl;
+    }
+
+    public void setAlfrescoAdminUsername(String alfrescoAdminUsername)
+    {
+        this.alfrescoAdminUsername = alfrescoAdminUsername;
+    }
+
+    public void setAlfrescoAdminPassword(String alfrescoAdminPassword)
+    {
+        this.alfrescoAdminPassword = alfrescoAdminPassword;
     }
 
     @Override
@@ -94,10 +109,8 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         {
             initializeUserGroupsMap();
         }
-        if (restClient == null)
-        {
-            initializeRestClient();
-        }
+
+        initializeRestClient();
 
         String username = (String) event.getData();
 
@@ -166,12 +179,14 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         }
     }
 
-    private void initializeRestClient()
+    private void initializeRestClient() throws MalformedURLException
     {
-        dataUser = (DataUser) this.context.getBean("dataUser");
+        URL url = new URL(alfrescoUrl);
         restClient = (RestWrapper) this.context.getBean("restWrapper");
-        restClient.configureRequestSpec().setBaseUri(baseUrl);
-        adminUser = dataUser.getAdminUser();
+        RestAssured.baseURI = url.getProtocol() + "://" + url.getHost();
+        RestAssured.port = url.getPort();
+        restClient.configureRequestSpec().setBaseUri(RestAssured.baseURI).setPort(RestAssured.port);
+        adminUser = new UserModel(alfrescoAdminUsername, alfrescoAdminPassword);
     }
 
     private void handleGroupsAssociation(String username, List<String> groups, RestWrapper restClient)
