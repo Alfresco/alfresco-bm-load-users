@@ -25,32 +25,25 @@
  */
 package org.alfresco.bm.user;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import org.alfresco.bm.AbstractRestApiEventProcessor;
+import org.alfresco.bm.common.EventResult;
+import org.alfresco.bm.data.DataCreationState;
+import org.alfresco.bm.driver.event.Event;
+import org.alfresco.rest.model.RestGroupMember;
+import org.alfresco.rest.model.RestPersonModel;
+import org.alfresco.utility.model.UserModel;
+import org.springframework.beans.BeansException;
+import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
+
+import javax.json.Json;
+import javax.json.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
-
-import javax.json.Json;
-import javax.json.JsonObject;
-
-import org.alfresco.bm.common.EventResult;
-import org.alfresco.bm.data.DataCreationState;
-import org.alfresco.bm.driver.event.AbstractEventProcessor;
-import org.alfresco.bm.driver.event.Event;
-import org.alfresco.rest.core.RestWrapper;
-import org.alfresco.rest.model.RestGroupMember;
-import org.alfresco.rest.model.RestPersonModel;
-import org.alfresco.utility.model.UserModel;
-import org.springframework.beans.BeansException;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.http.HttpStatus;
-
-import com.jayway.restassured.RestAssured;
 
 /**
  * Event processor that creates a test-user in the alfresco-system based on the
@@ -71,24 +64,17 @@ import com.jayway.restassured.RestAssured;
  * <h1>Output</h1>
  * No next event will be scheduled.
  */
-public class CreateUsersWithRestV1API extends AbstractEventProcessor implements ApplicationContextAware
+public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
 {
     private UserDataService userDataService;
     private boolean ignoreExistingUsers = false;
     private String userGroups;
     private Map<String, Double> userGroupsMap;
-    private String alfrescoUrl;
+
     private String alfrescoAdminUsername;
     private String alfrescoAdminPassword;
-    private RestWrapper restClient;
+
     private UserModel adminUser;
-
-    private ApplicationContext context;
-
-    public void setAlfrescoUrl(String alfrescoUrl)
-    {
-        this.alfrescoUrl = alfrescoUrl;
-    }
 
     public void setAlfrescoAdminUsername(String alfrescoAdminUsername)
     {
@@ -105,27 +91,27 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
     {
         super.suspendTimer();
 
-        if (userGroupsMap == null)
+        synchronized (this)
         {
-            initializeUserGroupsMap();
+            if (userGroupsMap == null)
+            {
+                initializeUserGroupsMap();
+            }
+            if (adminUser == null)
+            {
+                adminUser = new UserModel(alfrescoAdminUsername, alfrescoAdminPassword);
+            }
         }
-
-        initializeRestClient();
-
         String username = (String) event.getData();
-
-        EventResult eventResult = null;
 
         // Look up the user data
         UserData user = userDataService.findUserByUsername(username);
         if (user == null)
         {
             // User already existed
-            eventResult = new EventResult("User data not found in local database: " + username, Collections.EMPTY_LIST, false);
+            EventResult eventResult = new EventResult("User data not found in local database: " + username, Collections.EMPTY_LIST, false);
             return eventResult;
         }
-        // Assign random groups
-        List<String> groups = getRandomGroups();
 
         try
         {
@@ -139,16 +125,18 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
             personModel.setStatusUpdatedAt(null);
             personModel.setAspectNames(null);
 
-            // Restart timer
             super.resumeTimer();
-            personModel = restClient.authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
-            String code = restClient.getStatusCode();
+            RestPersonModel createdPersonModel = getRestWrapper().authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
             super.suspendTimer();
+
+            final String code = getRestWrapper().getStatusCode();
 
             if (HttpStatus.CREATED.toString().equals(code))
             {
+                // Assign random groups
+                List<String> groups = getRandomGroups();
                 //associate user with some groups.
-                handleGroupsAssociation(username, groups, restClient);
+                handleGroupsAssociation(username, groups);
 
                 //success, created the user
                 return markAsSuccess(username);
@@ -175,21 +163,11 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         catch (Exception e)
         {
             logger.error(e.getMessage(), e);
-            return markAsFailure(username);
+            throw e;
         }
     }
 
-    private void initializeRestClient() throws MalformedURLException
-    {
-        URL url = new URL(alfrescoUrl);
-        restClient = (RestWrapper) this.context.getBean("restWrapper");
-        RestAssured.baseURI = url.getProtocol() + "://" + url.getHost();
-        RestAssured.port = url.getPort();
-        restClient.configureRequestSpec().setBaseUri(RestAssured.baseURI).setPort(RestAssured.port);
-        adminUser = new UserModel(alfrescoAdminUsername, alfrescoAdminPassword);
-    }
-
-    private void handleGroupsAssociation(String username, List<String> groups, RestWrapper restClient)
+    private void handleGroupsAssociation(String username, List<String> groups)
     {
         // NOTE that this code currently does not create the missing groups. It assumes they are present on the Alfresco system
         // failing to associate the user with a group is not considered a problem
@@ -197,7 +175,7 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         {
             try
             {
-                createUserMembership(username, restClient, group);
+                createUserMembership(username, group);
             }
             catch (Exception e)
             {
@@ -207,15 +185,17 @@ public class CreateUsersWithRestV1API extends AbstractEventProcessor implements 
         }
     }
 
-    private void createUserMembership(String username, RestWrapper restClient, String group) throws Exception
+    private void createUserMembership(String username, String group) throws Exception
     {
         JsonObject groupMembershipBody = Json.createObjectBuilder().add("id", username).add("memberType", "PERSON").build();
         String groupMembershipBodyCreate = groupMembershipBody.toString();
-        //MembershipCreation
+
         super.resumeTimer();
-        RestGroupMember groupMembership = restClient.withCoreAPI().usingGroups().createGroupMembership("GROUP_" + group, groupMembershipBodyCreate);
-        String createGroupCode = restClient.getStatusCode();
+        final RestGroupMember createdGroupMembership = getRestWrapper().withCoreAPI().usingGroups()
+            .createGroupMembership("GROUP_" + group, groupMembershipBodyCreate);
         super.suspendTimer();
+
+        final String createGroupCode = getRestWrapper().getStatusCode();
 
         if (HttpStatus.CREATED.toString().equals(createGroupCode))
         {
