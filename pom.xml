@@ -15,7 +15,7 @@
     <packaging>jar</packaging>
 
     <properties>
-        <server.version>3.0.0-SNAPSHOT</server.version>
+        <server.version>3.0.0-mp7</server.version>
         <dependency.spring-boot.version>1.5.12.RELEASE</dependency.spring-boot.version>
         <dependency.fabric8.version>3.5.37</dependency.fabric8.version>
 
@@ -61,7 +61,7 @@
         <dependency>
             <groupId>org.alfresco.tas</groupId>
             <artifactId>restapi-test</artifactId>
-            <version>5.2.0-12-SNAPSHOT</version>
+            <version>5.2.0-11</version>
         </dependency>
         <!-- TODO remove this dependency -->
         <dependency>
@@ -81,11 +81,11 @@
     <distributionManagement>
         <repository>
             <id>alfresco-internal</id>
-            <url>https://artifacts.alfresco.com/nexus/content/repositories/internal-releases</url>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/releases</url>
         </repository>
         <snapshotRepository>
             <id>alfresco-internal-snapshots</id>
-            <url>https://artifacts.alfresco.com/nexus/content/repositories/enterprise-snapshots</url>
+            <url>https://artifacts.alfresco.com/nexus/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 

@@ -87,5 +87,8 @@ To run the Driver server from maven we again use the tomcat7-maven-plugin. For m
     Click the download button and open the CSV file in a spreadsheet.
 </code></pre>
 
+### Release bm-load-users project
+Please use [this guide](https://github.com/Alfresco/alfresco-bm-manager/tree/master/docs/ReleaseProcess.md) for the release process.
+
 ### Contributing guide
 Please use [this guide](CONTRIBUTING.md) to make a contribution to the project.
