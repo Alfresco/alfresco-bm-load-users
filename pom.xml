@@ -9,12 +9,12 @@
     </parent>
 
     <artifactId>alfresco-bm-load-users</artifactId>
-    <version>3.0-SNAPSHOT</version>
+    <version>3.0.0-SNAPSHOT</version>
     <name>Alfresco Benchmark Load Users Driver</name>
     <packaging>jar</packaging>
 
     <properties>
-        <server.version>3.0.0-SNAPSHOT</server.version>
+        <server.version>3.0.0</server.version>
         <dependency.spring-boot.version>1.5.12.RELEASE</dependency.spring-boot.version>
         <dependency.fabric8.version>3.5.37</dependency.fabric8.version>
 
