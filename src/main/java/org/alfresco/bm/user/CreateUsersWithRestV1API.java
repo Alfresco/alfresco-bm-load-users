@@ -25,6 +25,7 @@
  */
 package org.alfresco.bm.user;
 
+import io.micrometer.core.instrument.LongTaskTimer;
 import org.alfresco.bm.AbstractRestApiEventProcessor;
 import org.alfresco.bm.common.EventResult;
 import org.alfresco.bm.data.DataCreationState;
@@ -44,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Event processor that creates a test-user in the alfresco-system based on the
@@ -66,42 +68,41 @@ import java.util.StringTokenizer;
  */
 public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
 {
+    // some variable change while processing in multithreading env
+    // each thread needs to make sure it uses the main memory variable
+    // not the thread cached reference
+    private volatile MeteringUtil meteringUtil;
+    private volatile String userGroups;
+    private volatile Map<String, Double> userGroupsMap;
+
+    // variable that are set once when the bean is initialized
+    // these don't change, so the threads can use their own copies
     private UserDataService userDataService;
     private boolean ignoreExistingUsers = false;
-    private String userGroups;
-    private Map<String, Double> userGroupsMap;
-
     private String alfrescoAdminUsername;
     private String alfrescoAdminPassword;
-
     private UserModel adminUser;
-
-    public void setAlfrescoAdminUsername(String alfrescoAdminUsername)
-    {
-        this.alfrescoAdminUsername = alfrescoAdminUsername;
-    }
-
-    public void setAlfrescoAdminPassword(String alfrescoAdminPassword)
-    {
-        this.alfrescoAdminPassword = alfrescoAdminPassword;
-    }
 
     @Override
     protected EventResult processEvent(Event event) throws Exception
     {
         super.suspendTimer();
 
-        synchronized (this)
+        ensureAuxiliaryVariablesAreInitialized();
+        // we will time this processing
+        final LongTaskTimer.Sample processingDuration = meteringUtil.getEventProcessTime().start();
+        try
         {
-            if (userGroupsMap == null)
-            {
-                initializeUserGroupsMap();
-            }
-            if (adminUser == null)
-            {
-                adminUser = new UserModel(alfrescoAdminUsername, alfrescoAdminPassword);
-            }
+            return internalProcessTheEvent(event);
         }
+        finally
+        {
+            processingDuration.stop();
+        }
+    }
+
+    private EventResult internalProcessTheEvent(Event event) throws Exception
+    {
         String username = (String) event.getData();
 
         // Look up the user data
@@ -115,24 +116,23 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
 
         try
         {
-            RestPersonModel personModel = RestPersonModel.getRandomPersonModel();
-            personModel.setEmail(user.getEmail());
-            personModel.setFirstName(user.getFirstName());
-            personModel.setLastName(user.getLastName());
-            personModel.setPassword(user.getPassword());
-            personModel.setId(username);
-            personModel.setAvatarId(null);
-            personModel.setStatusUpdatedAt(null);
-            personModel.setAspectNames(null);
+            RestPersonModel personModel = getRestPersonModel(username, user);
+
+            meteringUtil.registerCall();
+
+            long t1 = System.currentTimeMillis();
 
             super.resumeTimer();
             RestPersonModel createdPersonModel = getRestWrapper().authenticateUser(adminUser).withCoreAPI().usingAuthUser().createPerson(personModel);
             super.suspendTimer();
 
+            recordRestAPICallDuration(t1);
+
             final String code = getRestWrapper().getStatusCode();
 
             if (HttpStatus.CREATED.toString().equals(code))
             {
+                meteringUtil.getRestCallsSuccessful().increment();
                 // Assign random groups
                 List<String> groups = getRandomGroups();
                 //associate user with some groups.
@@ -143,6 +143,7 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
             }
             else if (HttpStatus.CONFLICT.toString().equals(code))
             {
+                meteringUtil.getRestCallsTolerable().increment();
                 if (isIgnoreExistingUsers())
                 {
                     // user already exists, but we don't care, so... success
@@ -156,12 +157,14 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
             }
             else
             {
+                meteringUtil.getRestCallsFailed().increment();
                 // failed
                 return markAsFailure(username);
             }
         }
         catch (Exception e)
         {
+            meteringUtil.getRestCallsFailed().increment();
             logger.error(e.getMessage(), e);
             throw e;
         }
@@ -179,6 +182,7 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
             }
             catch (Exception e)
             {
+                meteringUtil.getRestCallsFailed().increment();
                 // just log it, we don't care that much
                 logger.error("error adding user to a group: " + group + " message: " + e.getMessage(), e);
             }
@@ -190,23 +194,51 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
         JsonObject groupMembershipBody = Json.createObjectBuilder().add("id", username).add("memberType", "PERSON").build();
         String groupMembershipBodyCreate = groupMembershipBody.toString();
 
+        meteringUtil.registerCall();
+
+        long t1 = System.currentTimeMillis();
+
         super.resumeTimer();
+
         final RestGroupMember createdGroupMembership = getRestWrapper().withCoreAPI().usingGroups()
             .createGroupMembership("GROUP_" + group, groupMembershipBodyCreate);
         super.suspendTimer();
+
+        recordRestAPICallDuration(t1);
 
         final String createGroupCode = getRestWrapper().getStatusCode();
 
         if (HttpStatus.CREATED.toString().equals(createGroupCode))
         {
+            meteringUtil.getRestCallsSuccessful().increment();
             //log this as success
             logger.info("User: " + username + " added to group: " + group);
         }
         else
         {
+            meteringUtil.getRestCallsFailed().increment();
             //log this as failure
             logger.warn("FAILED to add user: " + username + " to group: " + group + ". Make sure this group is created on your Alfresco system!");
         }
+    }
+
+    private void recordRestAPICallDuration(long t1)
+    {
+        meteringUtil.getRestCallTime().record((System.currentTimeMillis() - t1), TimeUnit.MILLISECONDS);
+    }
+
+    private RestPersonModel getRestPersonModel(String username, UserData user) throws Exception
+    {
+        RestPersonModel personModel = RestPersonModel.getRandomPersonModel();
+        personModel.setEmail(user.getEmail());
+        personModel.setFirstName(user.getFirstName());
+        personModel.setLastName(user.getLastName());
+        personModel.setPassword(user.getPassword());
+        personModel.setId(username);
+        personModel.setAvatarId(null);
+        personModel.setStatusUpdatedAt(null);
+        personModel.setAspectNames(null);
+        return personModel;
     }
 
     private EventResult markAsSuccess(String username)
@@ -219,6 +251,25 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
     {
         userDataService.setUserCreationState(username, DataCreationState.Failed);
         return new EventResult("Failed to create user:" + username, false);
+    }
+
+    private void ensureAuxiliaryVariablesAreInitialized()
+    {
+        synchronized (this)
+        {
+            if (userGroupsMap == null)
+            {
+                initializeUserGroupsMap();
+            }
+            if (adminUser == null)
+            {
+                adminUser = new UserModel(alfrescoAdminUsername, alfrescoAdminPassword);
+            }
+            if (meteringUtil == null)
+            {
+                meteringUtil = (MeteringUtil) context.getBean("meteringUtil");
+            }
+        }
     }
 
     /**
@@ -274,7 +325,8 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
                 }
                 catch (NumberFormatException e)
                 {
-                    throw new IllegalArgumentException("'userGroups' format is 'GROUP1:CHANCE1, GROUP2:CHANCE2' where the chances are values between 0 and 1.");
+                    throw new IllegalArgumentException(
+                        "'userGroups' format is 'GROUP1:CHANCE1, GROUP2:CHANCE2' where the chances are values between 0 and 1.");
                 }
             }
             // else there is no chance specified, so we assume 1.0
@@ -353,4 +405,15 @@ public class CreateUsersWithRestV1API extends AbstractRestApiEventProcessor
     {
         this.context = applicationContext;
     }
+
+    public void setAlfrescoAdminUsername(String alfrescoAdminUsername)
+    {
+        this.alfrescoAdminUsername = alfrescoAdminUsername;
+    }
+
+    public void setAlfrescoAdminPassword(String alfrescoAdminPassword)
+    {
+        this.alfrescoAdminPassword = alfrescoAdminPassword;
+    }
+
 }
